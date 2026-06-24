@@ -49,12 +49,12 @@ public class CreateExperimentViewModel
 public class AddTestCaseViewModel
 {
     [Required(ErrorMessage = "Vui lòng nhập câu hỏi.")]
-    [StringLength(2000, MinimumLength = 5, ErrorMessage = "Câu hỏi phải chứa 5–2000 ký tự.")]
+    [StringLength(2000, MinimumLength = 5, ErrorMessage = "Câu hỏi phải chứa từ 5–2000 ký tự.")]
     [Display(Name = "Câu hỏi")]
     public string Question { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Vui lòng nhập câu trả lời mong đợi.")]
-    [StringLength(5000, MinimumLength = 5, ErrorMessage = "Câu trả lời phải chứa 5–5000 ký tự.")]
+    [StringLength(5000, MinimumLength = 5, ErrorMessage = "Câu trả lời phải chứa từ 5–5000 ký tự.")]
     [Display(Name = "Câu trả lời mong đợi")]
     public string ExpectedAnswer { get; set; } = string.Empty;
 }
