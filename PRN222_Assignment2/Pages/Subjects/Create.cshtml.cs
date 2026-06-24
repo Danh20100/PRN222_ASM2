@@ -2,16 +2,20 @@ using BusinessLayer.DTOs;
 using BusinessLayer.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.SignalR;
+using PRN222_Assignment2.Hubs;
 
 namespace PRN222_Assignment2.Pages.Subjects;
 
 public class CreateModel : PageModel
 {
     private readonly ISubjectService _subjectService;
+    private readonly IHubContext<SubjectHub> _hubContext;
 
-    public CreateModel(ISubjectService subjectService)
+    public CreateModel(ISubjectService subjectService, IHubContext<SubjectHub> hubContext)
     {
         _subjectService = subjectService;
+        _hubContext = hubContext;
     }
 
     [BindProperty]
@@ -30,7 +34,9 @@ public class CreateModel : PageModel
 
         try
         {
-            await _subjectService.CreateAsync(SubjectDto);
+            var newSubject = await _subjectService.CreateAsync(SubjectDto);
+            await _hubContext.Clients.All.SendAsync("ReceiveSubjectUpdate", "create", newSubject);
+
             TempData["Success"] = "Đã tạo môn học thành công.";
             return RedirectToPage("/Subjects/Index");
         }
