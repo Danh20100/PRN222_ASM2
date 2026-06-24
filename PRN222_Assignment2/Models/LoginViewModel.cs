@@ -13,9 +13,9 @@ public class LoginViewModel
     [Display(Name = "Tên đăng nhập")]
     public string Username { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
+    [Required(ErrorMessage = "Vui lòng điền mật khẩu.")]
     [DataType(DataType.Password)]
-    [StringLength(255, MinimumLength = 6, ErrorMessage = "Mật khẩu phải từ 6 ký tự trở lên.")]
+    [StringLength(255, MinimumLength = 6, ErrorMessage = "Mật khẩu phải chứa ít nhất 6 ký tự.")]
     [Display(Name = "Mật khẩu")]
     public string Password { get; set; } = string.Empty;
 

@@ -19,7 +19,7 @@ public class ChangePasswordViewModel
     [Display(Name = "Mật khẩu mới")]
     public string NewPassword { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Vui lòng xác nhận mật khẩu mới.")]
+    [Required(ErrorMessage = "Vui lòng hãy xác nhận mật khẩu mới.")]
     [DataType(DataType.Password)]
     [Compare("NewPassword", ErrorMessage = "Mật khẩu xác nhận không khớp với mật khẩu mới.")]
     [Display(Name = "Xác nhận mật khẩu mới")]

@@ -8,32 +8,32 @@ namespace PRN222_Assignment2.Models;
 /// </summary>
 public class CreateExperimentViewModel
 {
-    [Required(ErrorMessage = "Vui lòng nhập tên Experiment.")]
+    [Required(ErrorMessage = "Hãy nhập tên Experiment.")]
     [StringLength(200, MinimumLength = 3, ErrorMessage = "Tên Experiment phải từ 3–200 ký tự.")]
     [Display(Name = "Tên Experiment")]
     public string ExperimentName { get; set; } = string.Empty;
 
-    [StringLength(1000, ErrorMessage = "Mô tả tối đa 1000 ký tự.")]
+    [StringLength(1000, ErrorMessage = "Mô tả tối đa chứa 1000 ký tự.")]
     [Display(Name = "Mô tả")]
     public string? Description { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn môn học.")]
-    [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn môn học hợp lệ.")]
+    [Required(ErrorMessage = "Xin hãy chọn môn học.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Hãy chọn môn học hợp lệ.")]
     [Display(Name = "Môn học")]
     public int SubjectId { get; set; }
 
     [Required(ErrorMessage = "Vui lòng chọn Embedding Model.")]
-    [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn Embedding Model hợp lệ.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Hãy chọn Embedding Model hợp lệ.")]
     [Display(Name = "Embedding Model")]
     public int EmbeddingModelId { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn AI Model.")]
-    [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn AI Model hợp lệ.")]
+    [Required(ErrorMessage = "Hãy chọn AI Model.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Hãy chọn AI Model hợp lệ.")]
     [Display(Name = "AI Model")]
     public int AiModelId { get; set; }
 
     [Required(ErrorMessage = "Vui lòng chọn Chunking Strategy.")]
-    [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn Chunking Strategy hợp lệ.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Hãy chọn Chunking Strategy hợp lệ.")]
     [Display(Name = "Chunking Strategy")]
     public int ChunkingStrategyId { get; set; }
 
@@ -54,7 +54,7 @@ public class AddTestCaseViewModel
     public string Question { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Vui lòng nhập câu trả lời mong đợi.")]
-    [StringLength(5000, MinimumLength = 5, ErrorMessage = "Câu trả lời phải từ 5–5000 ký tự.")]
+    [StringLength(5000, MinimumLength = 5, ErrorMessage = "Câu trả lời mong đợi phải chứa 5–5000 ký tự.")]
     [Display(Name = "Câu trả lời mong đợi")]
     public string ExpectedAnswer { get; set; } = string.Empty;
 }
