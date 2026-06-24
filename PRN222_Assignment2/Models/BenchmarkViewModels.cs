@@ -8,7 +8,7 @@ namespace PRN222_Assignment2.Models;
 /// </summary>
 public class CreateExperimentViewModel
 {
-    [Required(ErrorMessage = "Vui lòng hãy nhập tên Experiment.")]
+    [Required(ErrorMessage = "Vui lòng nhập tên Experiment.")]
     [StringLength(200, MinimumLength = 3, ErrorMessage = "Tên Experiment phải từ 3–200 ký tự.")]
     [Display(Name = "Tên Experiment")]
     public string ExperimentName { get; set; } = string.Empty;
@@ -22,17 +22,17 @@ public class CreateExperimentViewModel
     [Display(Name = "Môn học")]
     public int SubjectId { get; set; }
 
-    [Required(ErrorMessage = "Hãy chọn Embedding Model.")]
+    [Required(ErrorMessage = "Vui lòng chọn Embedding Model.")]
     [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn Embedding Model hợp lệ.")]
     [Display(Name = "Embedding Model")]
     public int EmbeddingModelId { get; set; }
 
-    [Required(ErrorMessage = "Hãy chọn AI Model.")]
+    [Required(ErrorMessage = "Vui lòng chọn AI Model.")]
     [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn AI Model hợp lệ.")]
     [Display(Name = "AI Model")]
     public int AiModelId { get; set; }
 
-    [Required(ErrorMessage = "Xin hãy chọn Chunking Strategy.")]
+    [Required(ErrorMessage = "Vui lòng chọn Chunking Strategy.")]
     [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn Chunking Strategy hợp lệ.")]
     [Display(Name = "Chunking Strategy")]
     public int ChunkingStrategyId { get; set; }
@@ -49,12 +49,12 @@ public class CreateExperimentViewModel
 public class AddTestCaseViewModel
 {
     [Required(ErrorMessage = "Vui lòng nhập câu hỏi.")]
-    [StringLength(2000, MinimumLength = 5, ErrorMessage = "Câu hỏi phải chứa từ 5–2000 ký tự.")]
+    [StringLength(2000, MinimumLength = 5, ErrorMessage = "Câu hỏi phải từ 5–2000 ký tự.")]
     [Display(Name = "Câu hỏi")]
     public string Question { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Vui lòng nhập câu trả lời mong đợi.")]
-    [StringLength(5000, MinimumLength = 5, ErrorMessage = "Câu trả lời phải chứa từ 5–5000 ký tự.")]
+    [StringLength(5000, MinimumLength = 5, ErrorMessage = "Câu trả lời phải từ 5–5000 ký tự.")]
     [Display(Name = "Câu trả lời mong đợi")]
     public string ExpectedAnswer { get; set; } = string.Empty;
 }
