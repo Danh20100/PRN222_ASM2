@@ -8,7 +8,7 @@ namespace PRN222_Assignment2.Models;
 /// </summary>
 public class CreateExperimentViewModel
 {
-    [Required(ErrorMessage = "Vui lòng nhập tên Experiment.")]
+    [Required(ErrorMessage = "Hãy nhập tên Experiment.")]
     [StringLength(200, MinimumLength = 3, ErrorMessage = "Tên Experiment phải từ 3–200 ký tự.")]
     [Display(Name = "Tên Experiment")]
     public string ExperimentName { get; set; } = string.Empty;
@@ -17,7 +17,7 @@ public class CreateExperimentViewModel
     [Display(Name = "Mô tả")]
     public string? Description { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn môn học.")]
+    [Required(ErrorMessage = "Xin hãy chọn môn học.")]
     [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn môn học hợp lệ.")]
     [Display(Name = "Môn học")]
     public int SubjectId { get; set; }
