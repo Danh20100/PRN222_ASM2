@@ -1,0 +1,112 @@
+@page
+@model PRN222_Assignment2.Pages.Benchmark.IndexModel
+@{
+    ViewData["Title"] = "Đánh giá RAG (Benchmark)";
+    ViewData["ActivePage"] = "Benchmark";
+}
+
+<div class="page-header">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h1>📊 Benchmark RAG</h1>
+            <p>Đánh giá hiệu suất của các mô hình và chiến lược Chunking</p>
+        </div>
+        @if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
+        {
+            <a href="/Benchmark/Create" class="btn btn-primary">+ Tạo Experiment mới</a>
+        }
+    </div>
+</div>
+
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="get" style="display:flex; gap:1rem; align-items:flex-end;">
+        <div style="flex:1;">
+            <label class="form-label">Chọn Môn học</label>
+            <select name="subjectId" class="form-control" onchange="this.form.submit()">
+                <option value="">-- Chọn môn học --</option>
+                @foreach (var s in Model.Subjects)
+                {
+                    if (Model.SelectedSubjectId == s.SubjectId)
+                    {
+                        <option value="@s.SubjectId" selected>@s.SubjectCode - @s.SubjectName</option>
+                    }
+                    else
+                    {
+                        <option value="@s.SubjectId">@s.SubjectCode - @s.SubjectName</option>
+                    }
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">Lọc</button>
+    </form>
+</div>
+
+@if (Model.SelectedSubjectId.HasValue)
+{
+    <div class="card" style="padding:0;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tên Experiment</th>
+                    <th>Cấu hình AI/Embedding</th>
+                    <th>Chiến lược Chunking</th>
+                    <th>Trạng thái</th>
+                    <th>Điểm số (Faith/Rel)</th>
+                    <th>Ngày tạo</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var exp in Model.Experiments)
+                {
+                    <tr>
+                        <td>
+                            <div style="font-weight:600; color:#fff;">@exp.ExperimentName</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">@exp.TestSetCount Test cases</div>
+                        </td>
+                        <td>
+                            <div style="font-size:0.8rem;">@exp.AiModelName</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">@exp.EmbeddingModelName</div>
+                        </td>
+                        <td style="font-size:0.875rem;">@exp.ChunkingStrategyName</td>
+                        <td>
+                            <span class="badge badge-@(exp.Status.ToLower() == "completed" ? "indexed" : exp.Status.ToLower() == "running" ? "processing" : exp.Status.ToLower() == "failed" ? "failed" : "pending")">
+                                @exp.Status
+                            </span>
+                        </td>
+                        <td>
+                            @if (exp.AvgFaithfulness.HasValue && exp.AvgRelevance.HasValue)
+                            {
+                                <div style="font-size:0.8rem; color:#6ee7b7;">F: @exp.AvgFaithfulness.Value.ToString("P1")</div>
+                                <div style="font-size:0.8rem; color:#93c5fd;">R: @exp.AvgRelevance.Value.ToString("P1")</div>
+                            }
+                            else
+                            {
+                                <span style="color:var(--text-muted); font-size:0.8rem;">Chưa có</span>
+                            }
+                        </td>
+                        <td style="font-size:0.8rem;">@exp.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <div style="display:flex; gap:0.5rem;">
+                                @if (exp.Status == "Pending" && (User.IsInRole("Admin") || User.IsInRole("Teacher")))
+                                {
+                                    <form method="post" asp-page-handler="RunExperiment">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="experimentId" value="@exp.ExperimentId" />
+                                        <input type="hidden" name="subjectId" value="@Model.SelectedSubjectId" />
+                                        <button class="btn btn-success btn-sm">▶ Run</button>
+                                    </form>
+                                }
+                                <a href="/Benchmark/Details/@exp.ExperimentId" class="btn btn-secondary btn-sm">Chi tiết</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Experiments.Any())
+                {
+                    <tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Chưa có Experiment nào cho môn học này.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

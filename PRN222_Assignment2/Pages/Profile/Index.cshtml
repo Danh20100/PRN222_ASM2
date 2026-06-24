@@ -1,0 +1,78 @@
+@page
+@model PRN222_Assignment2.Pages.Profile.IndexModel
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+    ViewData["ActivePage"] = "Profile";
+}
+
+<div class="page-header">
+    <h1>👤 Hồ sơ cá nhân</h1>
+    <p>Quản lý thông tin và bảo mật tài khoản</p>
+</div>
+
+@if (TempData["Success"] != null)
+{ <div class="alert alert-success">✅ @TempData["Success"]</div> }
+@if (TempData["Error"] != null)
+{ <div class="alert alert-error">⚠️ @TempData["Error"]</div> }
+@if (Request.Query["forceChangePassword"] == "true")
+{
+    <div class="alert alert-warning">
+        ⚠️ <strong>Yêu cầu bảo mật:</strong> Bạn đang sử dụng mật khẩu mặc định. Vui lòng đổi mật khẩu mới để tiếp tục sử dụng hệ thống an toàn.
+    </div>
+}
+
+<div class="grid-2">
+    <!-- Info Section -->
+    <div class="card">
+        <h3 style="color:#fff; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.75rem;">Thông tin tài khoản</h3>
+        
+        <div style="margin-bottom:1rem;">
+            <label style="color:var(--text-muted); font-size:0.875rem;">Họ và tên</label>
+            <div style="color:#fff; font-size:1.1rem; font-weight:500;">@Model.UserDto?.FullName</div>
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label style="color:var(--text-muted); font-size:0.875rem;">Tên đăng nhập</label>
+            <div style="color:#fff;">@Model.UserDto?.Username</div>
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label style="color:var(--text-muted); font-size:0.875rem;">Email</label>
+            <div style="color:#fff;">@Model.UserDto?.Email</div>
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label style="color:var(--text-muted); font-size:0.875rem;">Vai trò</label>
+            <div>
+                <span class="badge badge-@(Model.UserDto?.Role?.ToLower() ?? "student")">
+                    @Model.UserDto?.Role
+                </span>
+            </div>
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label style="color:var(--text-muted); font-size:0.875rem;">Ngày tham gia</label>
+            <div style="color:#fff;">@Model.UserDto?.CreatedAt.ToString("dd/MM/yyyy")</div>
+        </div>
+    </div>
+
+    <!-- Change Password Section -->
+    <div class="card">
+        <h3 style="color:#fff; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.75rem;">Đổi mật khẩu</h3>
+        
+        <form method="post" asp-page-handler="ChangePassword">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label class="form-label">Mật khẩu hiện tại</label>
+                <input type="password" name="PasswordInput.CurrentPassword" class="form-control" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mật khẩu mới</label>
+                <input type="password" name="PasswordInput.NewPassword" class="form-control" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Xác nhận mật khẩu mới</label>
+                <input type="password" name="PasswordInput.ConfirmPassword" class="form-control" required />
+            </div>
+            <div style="display:flex; justify-content:flex-end;">
+                <button type="submit" class="btn btn-primary">Lưu mật khẩu mới</button>
+            </div>
+        </form>
+    </div>
+</div>

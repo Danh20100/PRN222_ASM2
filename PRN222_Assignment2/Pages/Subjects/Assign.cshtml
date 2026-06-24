@@ -1,0 +1,60 @@
+@page "{subjectId:int}"
+@model PRN222_Assignment2.Pages.Subjects.AssignModel
+@{
+    ViewData["Title"] = "Phân công Giảng viên";
+    ViewData["ActivePage"] = "Subjects";
+}
+
+<div class="page-header">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h1>👨‍🏫 Phân công Giảng viên</h1>
+            <p>Môn học: <strong>@Model.Subject?.SubjectCode - @Model.Subject?.SubjectName</strong></p>
+        </div>
+        <a href="/Subjects" class="btn btn-secondary">← Trở về</a>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{ <div class="alert alert-success">✅ @TempData["Success"]</div> }
+@if (TempData["Error"] != null)
+{ <div class="alert alert-error">⚠️ @TempData["Error"]</div> }
+
+<div class="card">
+    <form method="post">
+        @Html.AntiForgeryToken()
+        <h3 style="margin-bottom:1rem; color:#fff;">Danh sách Giảng viên</h3>
+        <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1.5rem;">
+            Chọn các giảng viên sẽ được quyền upload tài liệu và quản lý chunking cho môn học này.
+        </p>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:1rem; margin-bottom:2rem;">
+            @foreach (var teacher in Model.AllTeachers)
+            {
+                var isAssigned = Model.AssignedTeacherIds.Contains(teacher.UserId);
+                var isHead = Model.HeadTeacherIds.Contains(teacher.UserId);
+                <div style="display:flex; flex-direction:column; gap:0.5rem; padding:1rem; background:var(--surface2); border:1px solid var(--border); border-radius:12px;">
+                    <label style="display:flex; align-items:center; gap:0.75rem; cursor:pointer;">
+                        <input type="checkbox" name="SelectedTeacherIds" value="@teacher.UserId" @(isAssigned ? "checked" : "") style="width:1.25rem; height:1.25rem; accent-color:var(--accent);" />
+                        <div>
+                            <div style="font-weight:600; color:#fff;">@teacher.FullName</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">@teacher.Email</div>
+                        </div>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; margin-left:2rem;">
+                        <input type="checkbox" name="SelectedHeadTeacherIds" value="@teacher.UserId" @(isHead ? "checked" : "") style="accent-color:var(--accent2);" />
+                        <span style="font-size:0.8rem; color:var(--text-muted);">Trưởng bộ môn</span>
+                    </label>
+                </div>
+            }
+            @if (!Model.AllTeachers.Any())
+            {
+                <p style="color:var(--text-muted);">Chưa có giảng viên nào trong hệ thống.</p>
+            }
+        </div>
+
+        <div style="display:flex; justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        </div>
+    </form>
+</div>

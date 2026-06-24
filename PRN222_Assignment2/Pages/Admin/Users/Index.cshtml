@@ -1,0 +1,150 @@
+@page
+@model PRN222_Assignment2.Pages.Admin.Users.IndexModel
+@{
+    ViewData["Title"] = "Quản lý Người dùng";
+    ViewData["ActivePage"] = "Users";
+}
+
+<div class="page-header">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h1>👥 Người dùng</h1>
+            <p>Quản lý tài khoản, Import CSV và phân quyền</p>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-success" onclick="showImportModal()">📥 Import CSV</button>
+            <button class="btn btn-primary" onclick="showCreateModal()">+ Thêm User</button>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{ <div class="alert alert-success">✅ @TempData["Success"]</div> }
+@if (TempData["Error"] != null)
+{ <div class="alert alert-error">⚠️ @TempData["Error"]</div> }
+
+<div class="card" style="padding:0;">
+    <table>
+        <thead>
+            <tr>
+                <th>Tài khoản</th>
+                <th>Họ tên</th>
+                <th>Role</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model.Users)
+            {
+                <tr>
+                    <td>
+                        <div style="font-weight:500; color:#fff;">@user.Username</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">@user.Email</div>
+                    </td>
+                    <td>@user.FullName</td>
+                    <td>
+                        <span class="badge badge-@(user.Role == "Admin" ? "admin" : user.Role == "Teacher" ? "teacher" : "student")">
+                            @user.Role
+                        </span>
+                    </td>
+                    <td>
+                        @if (user.IsActive)
+                        {
+                            <span class="badge badge-indexed">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-failed">Locked</span>
+                        }
+                    </td>
+                    <td style="font-size:0.8rem;">@user.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <form method="post" asp-page-handler="ToggleActive" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="userId" value="@user.UserId" />
+                            <button type="submit" class="btn btn-@(user.IsActive ? "danger" : "success") btn-sm">
+                                @(user.IsActive ? "Khóa" : "Mở khóa")
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Import CSV Modal -->
+<div id="import-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center;">
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:2rem; width:100%; max-width:500px;">
+        <h3 style="color:#fff; margin-bottom:1rem;">📥 Import CSV Users</h3>
+        <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1.5rem;">
+            File CSV cần có các cột Header: <strong>Username, Email, FullName, Role, Password</strong>.
+            Nếu Password bỏ trống, hệ thống sẽ tự sinh và gửi qua Email.
+        </p>
+        <form method="post" asp-page-handler="ImportCsv" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label class="form-label">File CSV</label>
+                <input type="file" name="CsvFile" class="form-control" accept=".csv" required />
+            </div>
+            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="hideImportModal()">Huỷ</button>
+                <button type="submit" class="btn btn-success">Import →</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Create User Modal -->
+<div id="create-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center;">
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:2rem; width:100%; max-width:500px;">
+        <h3 style="color:#fff; margin-bottom:1.5rem;">+ Thêm người dùng mới</h3>
+        <form method="post" asp-page-handler="CreateUser">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label class="form-label">Tên đăng nhập</label>
+                <input type="text" name="Input.Username" class="form-control" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" name="Input.Email" class="form-control" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Họ tên</label>
+                <input type="text" name="Input.FullName" class="form-control" />
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Mật khẩu</label>
+                    <input type="password" name="Input.Password" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Vai trò (Role)</label>
+                    <select name="Input.Role" class="form-control" required>
+                        <option value="Student">Student</option>
+                        <option value="Teacher">Teacher</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="hideCreateModal()">Huỷ</button>
+                <button type="submit" class="btn btn-primary">Tạo →</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function showImportModal() { document.getElementById('import-modal').style.display = 'flex'; }
+    function hideImportModal() { document.getElementById('import-modal').style.display = 'none'; }
+    document.getElementById('import-modal').addEventListener('click', function(e) { if (e.target === this) hideImportModal(); });
+
+    function showCreateModal() { document.getElementById('create-modal').style.display = 'flex'; }
+    function hideCreateModal() { document.getElementById('create-modal').style.display = 'none'; }
+    document.getElementById('create-modal').addEventListener('click', function(e) { if (e.target === this) hideCreateModal(); });
+</script>
+}

@@ -1,0 +1,66 @@
+@page
+@model PRN222_Assignment2.Pages.Subjects.IndexModel
+@{
+    ViewData["Title"] = "Môn học";
+    ViewData["ActivePage"] = "Subjects";
+}
+
+<div class="page-header">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h1>📚 Môn học</h1>
+            <p>Quản lý các môn học và chương trong hệ thống RAG LMS</p>
+        </div>
+        @if (Model.IsAdmin)
+        {
+            <a href="/Subjects/Create" class="btn btn-primary">+ Thêm môn học</a>
+        }
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">✅ @TempData["Success"]</div>
+}
+
+<div class="grid-3" id="subjects-grid">
+    @foreach (var subject in Model.Subjects)
+    {
+        <div class="card" style="cursor:pointer;" onclick="window.location='/Subjects/@subject.SubjectId'">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+                <span style="font-size:0.75rem; color:var(--accent); font-weight:600; background:rgba(108,99,255,0.15); padding:0.2rem 0.6rem; border-radius:6px;">
+                    @subject.SubjectCode
+                </span>
+                <span style="font-size:0.75rem; color:var(--text-muted);">@subject.ChapterCount chương</span>
+            </div>
+            <h3 style="font-size:1rem; font-weight:600; color:#fff; margin-bottom:0.5rem;">@subject.SubjectName</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.5; min-height:2.5rem;">
+                @(subject.Description ?? "Chưa có mô tả.")
+            </p>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:0.75rem; border-top:1px solid var(--border);">
+                <span style="font-size:0.8rem; color:var(--text-muted);">
+                    📄 @subject.DocumentCount tài liệu
+                </span>
+                <div style="display:flex; gap:0.5rem;">
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a href="/Subjects/Assign/@subject.SubjectId" class="btn btn-primary btn-sm" onclick="event.stopPropagation()">
+                            Phân công GV
+                        </a>
+                    }
+                    <a href="/Subjects/@subject.SubjectId" class="btn btn-secondary btn-sm" onclick="event.stopPropagation()">
+                        Chi tiết →
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!Model.Subjects.Any())
+    {
+        <div style="grid-column:1/-1; text-align:center; padding:4rem 2rem; color:var(--text-muted);">
+            <div style="font-size:3rem; margin-bottom:1rem;">📚</div>
+            <p>Chưa có môn học nào. Hãy thêm môn học đầu tiên!</p>
+        </div>
+    }
+</div>

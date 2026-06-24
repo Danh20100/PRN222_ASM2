@@ -1,0 +1,80 @@
+@page "{id:int}"
+@model PRN222_Assignment2.Pages.Documents.DetailsModel
+@{
+    ViewData["Title"] = "Chi tiết Tài liệu";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Chi tiết Document: @(Model.Document?.OriginalFileName ?? "N/A")</h2>
+    <a href="/Documents" class="btn btn-secondary">← Quay lại</a>
+</div>
+
+@if (Model.Document == null)
+{
+    <div class="alert alert-danger">Không tìm thấy tài liệu.</div>
+}
+else
+{
+    <div class="card mb-4" style="background: var(--bg-surface); border: 1px solid var(--border-color);">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Môn học:</strong> @Model.Document.SubjectName</p>
+                    <p><strong>Chapter:</strong> @Model.Document.ChapterName</p>
+                    <p><strong>Người upload:</strong> @Model.Document.UploadedByFullName</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Trạng thái:</strong> 
+                        <span class="badge badge-@(Model.Document.Status.ToLower() == "indexed" ? "indexed" : Model.Document.Status.ToLower() == "failed" ? "failed" : "pending")">
+                            @Model.Document.Status
+                        </span>
+                    </p>
+                    <p><strong>Tổng số chunks:</strong> @Model.Document.TotalChunks</p>
+                    <p><strong>Upload lúc:</strong> @Model.Document.UploadedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                </div>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.Document.ErrorMessage))
+            {
+                <div class="alert alert-danger mt-3 mb-0">
+                    <strong>Lỗi:</strong> @Model.Document.ErrorMessage
+                </div>
+            }
+        </div>
+    </div>
+
+    <h4>Danh sách Chunks</h4>
+    <div class="table-responsive">
+        <table class="table table-dark table-striped table-hover mt-3" style="background: var(--bg-surface); border: 1px solid var(--border-color);">
+            <thead>
+                <tr>
+                    <th style="width: 5%">#</th>
+                    <th style="width: 10%">Số Token</th>
+                    <th>Nội dung Chunk</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Chunks.Any())
+                {
+                    foreach (var chunk in Model.Chunks)
+                    {
+                        <tr>
+                            <td>@chunk.ChunkIndex</td>
+                            <td>@chunk.TokenCount</td>
+                            <td>
+                                <div style="max-height: 120px; overflow-y: auto; white-space: pre-wrap; font-size: 0.85rem; word-break: break-word; padding-right: 8px;">
+                                    @chunk.ChunkText
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="3" class="text-center text-muted py-4">Chưa có dữ liệu chunk nào được tạo.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

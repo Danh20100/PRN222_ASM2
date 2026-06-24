@@ -1,0 +1,194 @@
+@page
+@model PRN222_Assignment2.Pages.Documents.IndexModel
+@{
+    ViewData["Title"] = "Tài liệu";
+    ViewData["ActivePage"] = "Documents";
+}
+
+<div class="page-header">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h1>📄 Tài liệu</h1>
+            <p>Upload và quản lý tài liệu học tập trong RAG pipeline</p>
+        </div>
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="alert alert-info" style="margin-bottom:0; padding:0.5rem 1rem;">
+                <span style="font-size:0.8rem;">Admin chỉ có quyền xem tài liệu và Re-Index.</span>
+            </div>
+        }
+        else if (User.IsInRole("Teacher") && Model.HeadSubjectIds.Any())
+        {
+            <button class="btn btn-primary" onclick="showUploadModal()">⬆ Upload tài liệu</button>
+        }
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{ <div class="alert alert-success">✅ @TempData["Success"]</div> }
+@if (TempData["Error"] != null)
+{ <div class="alert alert-error">⚠️ @TempData["Error"]</div> }
+
+<!-- Filter Bar -->
+<div class="card" style="padding:1rem; margin-bottom:1rem;">
+    <form method="get" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+        <select name="subjectId" class="form-control" style="width:auto;" onchange="this.form.submit()">
+            <option value="">Tất cả môn học</option>
+            @foreach (var s in Model.Subjects)
+            {
+                <option value="@s.SubjectId" selected="@(Model.SelectedSubjectId == s.SubjectId)">
+                    @s.SubjectCode — @s.SubjectName
+                </option>
+            }
+        </select>
+        <select name="status" class="form-control" style="width:auto;" onchange="this.form.submit()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="Pending" selected="@(Model.SelectedStatus == "Pending")">Pending</option>
+            <option value="Processing" selected="@(Model.SelectedStatus == "Processing")">Processing</option>
+            <option value="Indexed" selected="@(Model.SelectedStatus == "Indexed")">Indexed</option>
+            <option value="Failed" selected="@(Model.SelectedStatus == "Failed")">Failed</option>
+        </select>
+    </form>
+</div>
+
+<!-- Documents Table -->
+<div class="card" style="padding:0;">
+    <table>
+        <thead>
+            <tr>
+                <th>Tên file</th>
+                <th>Môn học / Chương</th>
+                <th>Loại</th>
+                <th>Kích thước</th>
+                <th>Trạng thái</th>
+                <th>Số chunk</th>
+                <th>Upload lúc</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var doc in Model.Documents)
+            {
+                <tr>
+                    <td>
+                        <div style="font-weight:500; color:#fff;">@doc.OriginalFileName</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">@doc.UploadedByFullName</div>
+                    </td>
+                    <td>
+                        <div>@doc.SubjectName</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">@doc.ChapterName</div>
+                    </td>
+                    <td><span class="badge badge-processing">@doc.FileType?.ToUpper()</span></td>
+                    <td>@FormatFileSize(doc.FileSizeBytes)</td>
+                    <td>
+                        <span class="badge badge-@doc.Status.ToLower()">@doc.Status</span>
+                        @if (doc.Status == "Failed" && doc.ErrorMessage != null)
+                        {
+                            <div style="font-size:0.7rem; color:#fca5a5; margin-top:2px;" title="@doc.ErrorMessage">
+                                ⚠️ @doc.ErrorMessage[..Math.Min(50, doc.ErrorMessage.Length)]...
+                            </div>
+                        }
+                    </td>
+                    <td>@(doc.TotalChunks?.ToString() ?? "—")</td>
+                    <td style="font-size:0.8rem;">@doc.UploadedAt.ToString("dd/MM HH:mm")</td>
+                    <td>
+                        <div style="display:flex; gap:0.375rem;">
+                            <a href="/Documents/Details/@doc.DocumentId" class="btn btn-secondary btn-sm">Chi tiết</a>
+                            @if (doc.Status is "Failed" or "Indexed" && (User.IsInRole("Admin") || User.IsInRole("Teacher")))
+                            {
+                                <form method="post" asp-page-handler="ReIndex" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="documentId" value="@doc.DocumentId" />
+                                    <button type="submit" class="btn btn-success btn-sm">🔄</button>
+                                </form>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Documents.Any())
+            {
+                <tr>
+                    <td colspan="8" style="text-align:center; padding:3rem; color:var(--text-muted);">
+                        📄 Chưa có tài liệu nào được upload
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Upload Modal -->
+<div id="upload-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center;">
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:2rem; width:100%; max-width:500px;">
+        <h3 style="color:#fff; margin-bottom:1.5rem;">⬆ Upload tài liệu</h3>
+        <form method="post" asp-page-handler="Upload" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label class="form-label">Chương</label>
+                <select name="ChapterId" class="form-control" required id="chapter-select">
+                    <option value="">— Chọn chương —</option>
+                    @foreach (var ch in Model.AllChapters)
+                    {
+                        <option value="@ch.ChapterId">@ch.SubjectName / @ch.ChapterName</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Chunking Strategy</label>
+                <select name="ChunkingStrategyId" class="form-control" required>
+                    @foreach (var cs in Model.ChunkingStrategies)
+                    {
+                        <option value="@cs.ChunkingStrategyId" selected="@cs.IsDefault">
+                            @cs.StrategyName (@cs.StrategyType · @cs.ChunkSize tokens)
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Embedding Model</label>
+                <select name="EmbeddingModelId" class="form-control" required>
+                    @foreach (var em in Model.EmbeddingModels)
+                    {
+                        <option value="@em.EmbeddingModelId" selected="@em.IsDefault">
+                            @em.ModelName (@em.Provider)
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">File (PDF, DOCX, TXT, MD)</label>
+                <input type="file" name="UploadFile" class="form-control" accept=".pdf,.docx,.txt,.md" required />
+            </div>
+            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="hideUploadModal()">Huỷ</button>
+                <button type="submit" class="btn btn-primary">Upload & Index →</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function showUploadModal() { document.getElementById('upload-modal').style.display = 'flex'; }
+function hideUploadModal() { document.getElementById('upload-modal').style.display = 'none'; }
+document.getElementById('upload-modal').addEventListener('click', function(e) {
+    if (e.target === this) hideUploadModal();
+});
+
+// Auto-refresh every 10s if any document is Processing
+@if (Model.Documents.Any(d => d.Status == "Processing"))
+{
+    <text>setTimeout(() => location.reload(), 10000);</text>
+}
+</script>
+}
+
+@functions {
+    string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1048576) return (bytes / 1024.0).ToString("F1") + " KB";
+        return (bytes / 1048576.0).ToString("F1") + " MB";
+    }
+}
