@@ -26,27 +26,31 @@
 <div class="grid-3" id="subjects-grid">
     @foreach (var subject in Model.Subjects)
     {
-        <div class="card" style="cursor:pointer;" onclick="window.location='/Subjects/@subject.SubjectId'">
+        <div class="card" id="subject-@subject.SubjectId" style="cursor:pointer;" onclick="window.location='/Subjects/@subject.SubjectId'">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
-                <span style="font-size:0.75rem; color:var(--accent); font-weight:600; background:rgba(108,99,255,0.15); padding:0.2rem 0.6rem; border-radius:6px;">
+                <span class="subject-code" style="font-size:0.75rem; color:var(--accent); font-weight:600; background:rgba(108,99,255,0.15); padding:0.2rem 0.6rem; border-radius:6px;">
                     @subject.SubjectCode
                 </span>
-                <span style="font-size:0.75rem; color:var(--text-muted);">@subject.ChapterCount chương</span>
+                <span class="subject-chapter-count" style="font-size:0.75rem; color:var(--text-muted);">@subject.ChapterCount chương</span>
             </div>
-            <h3 style="font-size:1rem; font-weight:600; color:#fff; margin-bottom:0.5rem;">@subject.SubjectName</h3>
-            <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.5; min-height:2.5rem;">
+            <h3 class="subject-name" style="font-size:1rem; font-weight:600; color:#fff; margin-bottom:0.5rem;">@subject.SubjectName</h3>
+            <p class="subject-desc" style="font-size:0.8rem; color:var(--text-muted); line-height:1.5; min-height:2.5rem;">
                 @(subject.Description ?? "Chưa có mô tả.")
             </p>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:0.75rem; border-top:1px solid var(--border);">
-                <span style="font-size:0.8rem; color:var(--text-muted);">
+                <span class="subject-doc-count" style="font-size:0.8rem; color:var(--text-muted);">
                     📄 @subject.DocumentCount tài liệu
                 </span>
-                <div style="display:flex; gap:0.5rem;">
+                <div style="display:flex; gap:0.5rem; align-items:center;">
                     @if (User.IsInRole("Admin"))
                     {
-                        <a href="/Subjects/Assign/@subject.SubjectId" class="btn btn-primary btn-sm" onclick="event.stopPropagation()">
-                            Phân công GV
-                        </a>
+                        <a href="/Subjects/Assign/@subject.SubjectId" class="btn btn-primary btn-sm" onclick="event.stopPropagation()">Phân công GV</a>
+                        <a href="/Subjects/Edit/@subject.SubjectId" class="btn btn-secondary btn-sm" onclick="event.stopPropagation()">Sửa</a>
+                        <form method="post" asp-page-handler="Delete" style="display:inline;" onsubmit="event.stopPropagation(); return confirm('Bạn có chắc chắn muốn xóa môn học này?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="subjectId" value="@subject.SubjectId" />
+                            <button type="submit" class="btn btn-error btn-sm">Xóa</button>
+                        </form>
                     }
                     <a href="/Subjects/@subject.SubjectId" class="btn btn-secondary btn-sm" onclick="event.stopPropagation()">
                         Chi tiết →
@@ -58,9 +62,111 @@
 
     @if (!Model.Subjects.Any())
     {
-        <div style="grid-column:1/-1; text-align:center; padding:4rem 2rem; color:var(--text-muted);">
+        <div class="empty-message" style="grid-column:1/-1; text-align:center; padding:4rem 2rem; color:var(--text-muted);">
             <div style="font-size:3rem; margin-bottom:1rem;">📚</div>
             <p>Chưa có môn học nào. Hãy thêm môn học đầu tiên!</p>
         </div>
     }
 </div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/subjectHub")
+            .build();
+
+        connection.on("ReceiveSubjectUpdate", function (action, data) {
+            console.log("SignalR received:", action, data);
+            const grid = document.getElementById("subjects-grid");
+            
+            if (action === "create") {
+                const emptyMsg = grid.querySelector('.empty-message');
+                if (emptyMsg) emptyMsg.remove();
+
+                const newCard = document.createElement("div");
+                newCard.className = "card";
+                newCard.id = `subject-${data.subjectId}`;
+                newCard.style.cursor = "pointer";
+                newCard.onclick = () => window.location = `/Subjects/${data.subjectId}`;
+                
+                let adminHtml = '';
+                @if (User.IsInRole("Admin")) {
+                    <text>
+                    adminHtml = `
+                        <a href="/Subjects/Assign/${data.subjectId}" class="btn btn-primary btn-sm" onclick="event.stopPropagation()">Phân công GV</a>
+                        <a href="/Subjects/Edit/${data.subjectId}" class="btn btn-secondary btn-sm" onclick="event.stopPropagation()">Sửa</a>
+                        <form method="post" action="/Subjects?handler=Delete" style="display:inline;" onsubmit="event.stopPropagation(); return confirm('Bạn có chắc chắn muốn xóa môn học này?');">
+                            <input name="__RequestVerificationToken" type="hidden" value="${document.querySelector('input[name=__RequestVerificationToken]')?.value || ''}">
+                            <input type="hidden" name="subjectId" value="${data.subjectId}" />
+                            <button type="submit" class="btn btn-error btn-sm">Xóa</button>
+                        </form>
+                    `;
+                    </text>
+                }
+                
+                newCard.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+                        <span class="subject-code" style="font-size:0.75rem; color:var(--accent); font-weight:600; background:rgba(108,99,255,0.15); padding:0.2rem 0.6rem; border-radius:6px;">
+                            ${data.subjectCode}
+                        </span>
+                        <span class="subject-chapter-count" style="font-size:0.75rem; color:var(--text-muted);">${data.chapterCount} chương</span>
+                    </div>
+                    <h3 class="subject-name" style="font-size:1rem; font-weight:600; color:#fff; margin-bottom:0.5rem;">${data.subjectName}</h3>
+                    <p class="subject-desc" style="font-size:0.8rem; color:var(--text-muted); line-height:1.5; min-height:2.5rem;">
+                        ${data.description || "Chưa có mô tả."}
+                    </p>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:0.75rem; border-top:1px solid var(--border);">
+                        <span class="subject-doc-count" style="font-size:0.8rem; color:var(--text-muted);">
+                            📄 ${data.documentCount} tài liệu
+                        </span>
+                        <div style="display:flex; gap:0.5rem; align-items:center;">
+                            ${adminHtml}
+                            <a href="/Subjects/${data.subjectId}" class="btn btn-secondary btn-sm" onclick="event.stopPropagation()">Chi tiết →</a>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(newCard);
+                // Hiệu ứng flash khi thêm mới
+                newCard.style.transition = "background-color 0.5s";
+                newCard.style.backgroundColor = "rgba(108,99,255,0.2)";
+                setTimeout(() => newCard.style.backgroundColor = "", 1000);
+            } 
+            else if (action === "update") {
+                const card = document.getElementById(`subject-${data.subjectId}`);
+                if (card) {
+                    card.querySelector('.subject-name').textContent = data.subjectName;
+                    card.querySelector('.subject-desc').textContent = data.description || "Chưa có mô tả.";
+                    card.querySelector('.subject-code').textContent = data.subjectCode;
+                    
+                    card.style.transition = "background-color 0.5s";
+                    card.style.backgroundColor = "rgba(108,99,255,0.2)";
+                    setTimeout(() => card.style.backgroundColor = "", 1000);
+                }
+            } 
+            else if (action === "delete") {
+                const card = document.getElementById(`subject-${data}`);
+                if (card) {
+                    card.style.transition = "opacity 0.5s, transform 0.5s";
+                    card.style.opacity = "0";
+                    card.style.transform = "scale(0.9)";
+                    setTimeout(() => {
+                        card.remove();
+                        if (grid.querySelectorAll('.card').length === 0) {
+                            grid.innerHTML = `
+                                <div class="empty-message" style="grid-column:1/-1; text-align:center; padding:4rem 2rem; color:var(--text-muted);">
+                                    <div style="font-size:3rem; margin-bottom:1rem;">📚</div>
+                                    <p>Chưa có môn học nào. Hãy thêm môn học đầu tiên!</p>
+                                </div>
+                            `;
+                        }
+                    }, 500);
+                }
+            }
+        });
+
+        connection.start().catch(function (err) {
+            return console.error("SignalR Error:", err.toString());
+        });
+    </script>
+}

@@ -5,6 +5,7 @@ using DataAccessLayer.Context;
 using DataAccessLayer.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using PRN222_Assignment2.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -113,6 +114,9 @@ builder.Services.AddSession(options =>
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
+// ── SignalR ───────────────────────────────────────────────────────────
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // ── Middleware Pipeline ───────────────────────────────────────────────
@@ -130,6 +134,7 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
+app.MapHub<SubjectHub>("/subjectHub");
 
 // ── Auto-apply EF Core Migrations on startup ──────────────────────────
 using (var scope = app.Services.CreateScope())

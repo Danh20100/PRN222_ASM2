@@ -1,0 +1,52 @@
+@page "{id:int}"
+@model PRN222_Assignment2.Pages.Subjects.EditModel
+@{
+    ViewData["Title"] = "Chỉnh sửa môn học";
+    ViewData["ActivePage"] = "Subjects";
+}
+
+<div class="page-header">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <h1>Sửa môn học: @Model.SubjectDto.SubjectCode</h1>
+            <p>Cập nhật thông tin môn học</p>
+        </div>
+        <a href="/Subjects" class="btn btn-secondary">← Quay lại</a>
+    </div>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-error">@TempData["Error"]</div>
+}
+
+<div class="card" style="max-width: 600px;">
+    <form method="post">
+        <div class="form-group" style="margin-bottom:1.5rem;">
+            <label class="form-label">Mã môn học</label>
+            <input type="text" asp-for="SubjectDto.SubjectCode" class="form-control" required placeholder="VD: PRN222" />
+            <span asp-validation-for="SubjectDto.SubjectCode" class="text-danger" style="font-size:0.8rem; color:var(--error);"></span>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1.5rem;">
+            <label class="form-label">Tên môn học</label>
+            <input type="text" asp-for="SubjectDto.SubjectName" class="form-control" required placeholder="VD: C# Web Development" />
+            <span asp-validation-for="SubjectDto.SubjectName" class="text-danger" style="font-size:0.8rem; color:var(--error);"></span>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1.5rem;">
+            <label class="form-label">Mô tả chi tiết</label>
+            <textarea asp-for="SubjectDto.Description" class="form-control" rows="4" placeholder="Nhập mô tả môn học..."></textarea>
+            <span asp-validation-for="SubjectDto.Description" class="text-danger" style="font-size:0.8rem; color:var(--error);"></span>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:2rem;">
+            <a href="/Subjects" class="btn btn-secondary">Hủy bỏ</a>
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
