@@ -8,7 +8,7 @@ namespace PRN222_Assignment2.Models;
 /// </summary>
 public class ChangePasswordViewModel
 {
-    [Required(ErrorMessage = "Vui lòng nhập mật khẩu hiện tại.")]
+    [Required(ErrorMessage = "Xin hãy nhập mật khẩu hiện tại.")]
     [DataType(DataType.Password)]
     [Display(Name = "Mật khẩu hiện tại")]
     public string CurrentPassword { get; set; } = string.Empty;
