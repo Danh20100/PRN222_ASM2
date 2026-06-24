@@ -1,8 +1,18 @@
-﻿@page
+@page
 @model PrivacyModel
 @{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Chính sách bảo mật";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="page-header">
+    <h1>@ViewData["Title"]</h1>
+    <p>Thông tin về quyền riêng tư và bảo mật dữ liệu</p>
+</div>
+
+<div class="card">
+    <h3 style="color:#fff; margin-bottom: 1rem;">Bảo mật dữ liệu</h3>
+    <p style="color: var(--text-muted); line-height: 1.6;">
+        Toàn bộ tài liệu được tải lên hệ thống sẽ được mã hóa và lưu trữ an toàn. 
+        Mô hình AI chỉ sử dụng tài liệu trong phạm vi ngữ cảnh truy vấn và không dùng để huấn luyện mô hình cơ sở (base model) theo chính sách của tổ chức.
+    </p>
+</div>
