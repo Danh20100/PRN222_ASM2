@@ -52,7 +52,7 @@ public class IndexModel : PageModel
     {
         // Fire and forget the background execution to avoid blocking the request
         // In a real prod app, use IHostedService or Hangfire, but for this assignment Task.Run is okay.
-        _ = Task.Run(async () =>
+        _ = Task.Run(() =>
         {
             // We need a separate scope since HttpContext is disposed
             // However, BenchmarkService already uses IUnitOfWork injected scoped. 
