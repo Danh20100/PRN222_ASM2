@@ -179,15 +179,5 @@ Experiment ──< BenchmarkResult
 
 ---
 
-## 👨‍💻 Tác giả
 
-- **Họ tên:** *(Cập nhật tên của bạn)*
-- **Mã sinh viên:** *(Cập nhật MSV)*
-- **Môn học:** PRN222 — Advanced Cross-Platform Application Programming with .NET
-- **Trường:** FPT University
 
----
-
-## 📝 License
-
-Dự án này được phát triển cho mục đích học tập tại FPT University.
