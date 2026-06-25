@@ -7,43 +7,42 @@
 
 @section Styles {
 <style>
-    .chat-layout { display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem; height: calc(100vh - 4rem); }
-    .session-list { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; }
-    .session-header { padding: 1rem; border-bottom: 1px solid var(--border); }
-    .session-header h3 { font-size: 0.875rem; font-weight: 600; color: #fff; }
+    .chat-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1rem; height: calc(100vh - 8rem); }
+    .session-list { background: #fff; border: 1px solid #dee2e6; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; }
+    .session-header { padding: 0.75rem; border-bottom: 1px solid #dee2e6; background-color: #f8f9fa; }
+    .session-header h3 { font-size: 0.875rem; font-weight: 600; color: #333; }
     .sessions-scroll { flex: 1; overflow-y: auto; padding: 0.5rem; }
-    .session-item { padding: 0.75rem; border-radius: 10px; cursor: pointer; margin-bottom: 4px; transition: all 0.15s; }
-    .session-item:hover, .session-item.active { background: rgba(108,99,255,0.15); }
-    .session-item .title { font-size: 0.8rem; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .session-item .meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
-    .chat-area { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; }
-    .chat-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    .messages-container { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
-    .message { max-width: 75%; display: flex; flex-direction: column; gap: 0.25rem; }
+    .session-item { padding: 0.5rem 0.75rem; border-radius: 4px; cursor: pointer; margin-bottom: 2px; }
+    .session-item:hover, .session-item.active { background-color: #e9ecef; }
+    .session-item .title { font-size: 0.8rem; font-weight: 500; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .session-item .meta { font-size: 0.7rem; color: #6c757d; margin-top: 2px; }
+    .chat-area { background: #fff; border: 1px solid #dee2e6; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; }
+    .chat-header { padding: 0.75rem 1rem; border-bottom: 1px solid #dee2e6; display: flex; align-items: center; justify-content: space-between; background-color: #f8f9fa; }
+    .messages-container { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; background-color: #fafafa; }
+    .message { max-width: 75%; display: flex; flex-direction: column; gap: 0.2rem; }
     .message.user { align-self: flex-end; align-items: flex-end; }
     .message.assistant { align-self: flex-start; align-items: flex-start; }
-    .message-bubble { padding: 0.875rem 1.125rem; border-radius: 16px; font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
-    .message.user .message-bubble { background: linear-gradient(135deg, var(--accent), #8b5cf6); color: #fff; border-bottom-right-radius: 4px; }
-    .message.assistant .message-bubble { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
-    .message-meta { font-size: 0.7rem; color: var(--text-muted); }
-    .citations { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.375rem; }
-    .citation-chip { font-size: 0.7rem; padding: 0.2rem 0.6rem; background: rgba(62,207,142,0.1); border: 1px solid rgba(62,207,142,0.25); border-radius: 20px; color: #6ee7b7; cursor: pointer; transition: all 0.15s; }
-    .citation-chip:hover { background: rgba(62,207,142,0.2); }
-    .chat-input-area { padding: 1rem 1.25rem; border-top: 1px solid var(--border); }
-    .input-row { display: flex; gap: 0.75rem; align-items: flex-end; }
-    .chat-textarea { flex: 1; padding: 0.75rem 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 0.875rem; font-family: inherit; resize: none; min-height: 52px; max-height: 120px; outline: none; transition: all 0.15s; }
-    .chat-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,99,255,0.15); }
-    .btn-send { width: 52px; height: 52px; background: linear-gradient(135deg, var(--accent), #8b5cf6); border: none; border-radius: 12px; color: #fff; font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
-    .btn-send:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(108,99,255,0.4); }
-    .btn-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .typing-indicator { display: flex; align-items: center; gap: 0.5rem; padding: 0.875rem 1.125rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 16px; border-bottom-left-radius: 4px; width: fit-content; }
-    .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: bounce 1.4s infinite; }
+    .message-bubble { padding: 0.625rem 0.875rem; border-radius: 6px; font-size: 0.875rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+    .message.user .message-bubble { background-color: #0d6efd; color: #fff; }
+    .message.assistant .message-bubble { background-color: #e9ecef; border: 1px solid #dee2e6; color: #333; }
+    .message-meta { font-size: 0.7rem; color: #6c757d; }
+    .citations { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.25rem; }
+    .citation-chip { font-size: 0.7rem; padding: 0.15rem 0.5rem; background-color: #d1e7dd; border: 1px solid #badbcc; border-radius: 3px; color: #0f5132; cursor: pointer; }
+    .citation-chip:hover { background-color: #a3cfbb; }
+    .chat-input-area { padding: 0.75rem 1rem; border-top: 1px solid #dee2e6; }
+    .input-row { display: flex; gap: 0.5rem; align-items: flex-end; }
+    .chat-textarea { flex: 1; padding: 0.5rem 0.75rem; background: #fff; border: 1px solid #ced4da; border-radius: 4px; color: #333; font-size: 0.875rem; font-family: inherit; resize: none; min-height: 42px; max-height: 120px; outline: none; }
+    .chat-textarea:focus { border-color: #86b7fe; box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.25); }
+    .btn-send { width: 42px; height: 42px; background-color: #0d6efd; border: none; border-radius: 4px; color: #fff; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .btn-send:hover { background-color: #0b5ed7; }
+    .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+    .typing-indicator { display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 0.875rem; background-color: #e9ecef; border: 1px solid #dee2e6; border-radius: 6px; width: fit-content; }
+    .dot { width: 6px; height: 6px; background: #6c757d; border-radius: 50%; animation: bounce 1.4s infinite; }
     .dot:nth-child(2) { animation-delay: 0.2s; }
     .dot:nth-child(3) { animation-delay: 0.4s; }
-    @@keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
-    .empty-chat { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; color: var(--text-muted); }
-    .empty-chat .icon { font-size: 3.5rem; }
-    .empty-chat h3 { font-size: 1.125rem; color: var(--text); }
+    @@keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+    .empty-chat { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; color: #6c757d; }
+    .empty-chat h3 { font-size: 1rem; color: #333; }
 </style>
 }
 
@@ -55,7 +54,7 @@
     <div class="session-list">
         <div class="session-header">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3>💬 Lịch sử chat</h3>
+                <h3>Lịch sử chat</h3>
                 <button class="btn btn-primary btn-sm" onclick="showNewSessionModal()">+</button>
             </div>
         </div>
@@ -70,7 +69,7 @@
             }
             @if (!Model.Sessions.Any())
             {
-                <p style="text-align:center; padding:2rem 0.5rem; font-size:0.8rem; color:var(--text-muted);">
+                <p style="text-align:center; padding:2rem 0.5rem; font-size:0.8rem; color:#6c757d;">
                     Chưa có cuộc trò chuyện nào
                 </p>
             }
@@ -83,8 +82,8 @@
         {
             <div class="chat-header">
                 <div>
-                    <strong style="color:#fff; font-size:0.95rem;">@Model.CurrentSession.SessionTitle</strong>
-                    <div style="font-size:0.75rem; color:var(--text-muted);">
+                    <strong style="font-size:0.9rem;">@Model.CurrentSession.SessionTitle</strong>
+                    <div style="font-size:0.75rem; color:#6c757d;">
                         @Model.CurrentSession.SubjectName · @Model.CurrentSession.AiModelName
                     </div>
                 </div>
@@ -105,7 +104,7 @@
                                 @foreach (var cite in msg.Citations)
                                 {
                                     <span class="citation-chip" title="@cite.ChunkText[..Math.Min(200, cite.ChunkText.Length)]...">
-                                        📎 @cite.DocumentName (@cite.SimilarityScore.ToString("P0"))
+                                        @cite.DocumentName (@cite.SimilarityScore.ToString("P0"))
                                     </span>
                                 }
                             </div>
@@ -133,7 +132,6 @@
         else
         {
             <div class="empty-chat">
-                <div class="icon">🧠</div>
                 <h3>Bắt đầu chat với AI</h3>
                 <p style="font-size:0.875rem;">Chọn cuộc trò chuyện hoặc tạo mới để hỏi đáp về tài liệu học tập</p>
                 <button class="btn btn-primary" onclick="showNewSessionModal()">+ Tạo chat mới</button>
@@ -143,9 +141,9 @@
 </div>
 
 <!-- New Session Modal -->
-<div id="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; display:none; align-items:center; justify-content:center;">
-    <div style="background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:2rem; width:100%; max-width:460px;">
-        <h3 style="color:#fff; margin-bottom:1.5rem; font-size:1.1rem;">Tạo cuộc trò chuyện mới</h3>
+<div id="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:none; align-items:center; justify-content:center;">
+    <div style="background:#fff; border:1px solid #dee2e6; border-radius:6px; padding:1.5rem; width:100%; max-width:460px;">
+        <h3 style="margin-bottom:1rem; font-size:1rem;">Tạo cuộc trò chuyện mới</h3>
         <form method="post" asp-page-handler="CreateSession">
             @Html.AntiForgeryToken()
             <div class="form-group">
@@ -179,9 +177,9 @@
                     }
                 </select>
             </div>
-            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+            <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
                 <button type="button" class="btn btn-secondary" onclick="hideNewSessionModal()">Huỷ</button>
-                <button type="submit" class="btn btn-primary">Tạo →</button>
+                <button type="submit" class="btn btn-primary">Tạo</button>
             </div>
         </form>
     </div>
@@ -243,13 +241,13 @@ async function sendMessage() {
         document.getElementById('typing-indicator').style.display = 'none';
 
         if (data.isError) {
-            appendMessage('assistant', '⚠️ ' + data.errorMessage, [], true);
+            appendMessage('assistant', data.errorMessage, [], true);
         } else {
             appendMessage('assistant', data.answer, data.citations, false, data.latencyMs);
         }
     } catch (err) {
         document.getElementById('typing-indicator').style.display = 'none';
-        appendMessage('assistant', '⚠️ Lỗi kết nối. Vui lòng thử lại.', [], true);
+        appendMessage('assistant', 'Lỗi kết nối. Vui lòng thử lại.', [], true);
     }
 
     document.getElementById('btn-send').disabled = false;
@@ -265,12 +263,12 @@ function appendMessage(role, content, citations = [], isError = false, latencyMs
     let citationsHtml = '';
     if (citations && citations.length > 0) {
         citationsHtml = '<div class="citations">' +
-            citations.map(c => `<span class="citation-chip" title="${c.chunkText?.substring(0, 200) || ''}...">📎 ${c.documentName} (${(c.similarityScore * 100).toFixed(0)}%)</span>`).join('') +
+            citations.map(c => `<span class="citation-chip" title="${c.chunkText?.substring(0, 200) || ''}...">${c.documentName} (${(c.similarityScore * 100).toFixed(0)}%)</span>`).join('') +
             '</div>';
     }
 
     div.innerHTML = `
-        <div class="message-bubble" style="${isError ? 'border-color:rgba(239,68,68,0.4)' : ''}">${content.replace(/\n/g, '<br>')}</div>
+        <div class="message-bubble" style="${isError ? 'border-color:#f5c2c7; background-color:#f8d7da; color:#842029;' : ''}">${content.replace(/\n/g, '<br>')}</div>
         <div class="message-meta">${time}${latencyText}</div>
         ${citationsHtml}
     `;

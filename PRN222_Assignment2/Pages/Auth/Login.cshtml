@@ -11,15 +11,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
     <meta name="description" content="Đăng nhập vào hệ thống RAG Learning Management System" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Inter', system-ui, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            background-color: #f5f5f5;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -27,90 +25,66 @@
         }
 
         .login-card {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 24px;
-            padding: 2.5rem;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 2rem;
             width: 100%;
-            max-width: 420px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-            animation: slideUp 0.5s ease;
-        }
-
-        @@keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            max-width: 400px;
         }
 
         .brand {
             text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .brand-icon {
-            width: 64px; height: 64px;
-            background: linear-gradient(135deg, #6c63ff, #3ecf8e);
-            border-radius: 16px;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 28px;
+            margin-bottom: 1.5rem;
         }
 
         .brand h1 {
-            color: #fff;
-            font-size: 1.5rem;
+            color: #333;
+            font-size: 1.4rem;
             font-weight: 700;
-            letter-spacing: -0.02em;
         }
 
         .brand p {
-            color: rgba(255,255,255,0.5);
+            color: #6c757d;
             font-size: 0.875rem;
             margin-top: 0.25rem;
         }
 
-        .form-group { margin-bottom: 1.25rem; }
+        .form-group { margin-bottom: 1rem; }
 
         label {
             display: block;
-            color: rgba(255,255,255,0.8);
+            color: #333;
             font-size: 0.875rem;
             font-weight: 500;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.35rem;
         }
 
         input[type="text"], input[type="password"] {
             width: 100%;
-            padding: 0.75rem 1rem;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 12px;
-            color: #fff;
-            font-size: 0.95rem;
+            padding: 0.5rem 0.75rem;
+            background: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            color: #333;
+            font-size: 0.9rem;
             font-family: inherit;
-            transition: all 0.2s;
             outline: none;
         }
 
-        input::placeholder { color: rgba(255,255,255,0.3); }
-
         input:focus {
-            border-color: #6c63ff;
-            background: rgba(108,99,255,0.1);
-            box-shadow: 0 0 0 3px rgba(108,99,255,0.2);
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.25);
         }
 
         .remember-row {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
         }
 
         .remember-row input[type="checkbox"] {
-            accent-color: #6c63ff;
             width: 16px; height: 16px;
             cursor: pointer;
         }
@@ -123,53 +97,43 @@
 
         .btn-login {
             width: 100%;
-            padding: 0.875rem;
-            background: linear-gradient(135deg, #6c63ff, #3ecf8e);
+            padding: 0.6rem;
+            background-color: #0d6efd;
             border: none;
-            border-radius: 12px;
+            border-radius: 4px;
             color: #fff;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             font-family: inherit;
             cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-            overflow: hidden;
         }
 
         .btn-login:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 25px rgba(108,99,255,0.5);
+            background-color: #0b5ed7;
         }
 
-        .btn-login:active { transform: translateY(0); }
-
         .alert-error {
-            background: rgba(239,68,68,0.15);
-            border: 1px solid rgba(239,68,68,0.4);
-            border-radius: 10px;
-            color: #fca5a5;
-            padding: 0.75rem 1rem;
+            background-color: #f8d7da;
+            border: 1px solid #f5c2c7;
+            border-radius: 4px;
+            color: #842029;
+            padding: 0.5rem 0.75rem;
             font-size: 0.875rem;
-            margin-bottom: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            margin-bottom: 1rem;
         }
     </style>
 </head>
 <body>
     <div class="login-card">
         <div class="brand">
-            <div class="brand-icon">🧠</div>
             <h1>RAG Learning System</h1>
-            <p>PRN222 Assignment 2 — AI-Powered LMS</p>
+            <p>PRN222 Assignment 2</p>
         </div>
 
         @if (!string.IsNullOrEmpty(Model.ErrorMessage))
         {
             <div class="alert-error">
-                <span>⚠️</span> @Model.ErrorMessage
+                @Model.ErrorMessage
             </div>
         }
 
@@ -191,7 +155,7 @@
                 <label for="RememberMe">Ghi nhớ đăng nhập</label>
             </div>
             <button type="submit" class="btn-login" id="btn-submit">
-                Đăng nhập →
+                Đăng nhập
             </button>
         </form>
     </div>

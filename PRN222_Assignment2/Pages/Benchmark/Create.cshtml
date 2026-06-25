@@ -8,7 +8,7 @@
 <div class="page-header">
     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
-            <h1>➕ Tạo Experiment</h1>
+            <h1>Tạo Experiment</h1>
             <p>Khởi tạo cấu hình đánh giá (Model, Chunking, Top K)</p>
         </div>
         <a href="/Benchmark" class="btn btn-secondary">← Trở về</a>
@@ -16,7 +16,7 @@
 </div>
 
 @if (TempData["Error"] != null)
-{ <div class="alert alert-error">⚠️ @TempData["Error"]</div> }
+{ <div class="alert alert-error">@TempData["Error"]</div> }
 
 <div class="card" style="max-width:800px;">
     <form method="post">
@@ -80,13 +80,13 @@
                     <option value="@s.ChunkingStrategyId">@s.StrategyName (Size: @s.ChunkSize, Overlap: @s.ChunkOverlap)</option>
                 }
             </select>
-            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
+            <p style="font-size:0.75rem; color:#6c757d; margin-top:0.25rem;">
                 Lưu ý: Môn học phải có ít nhất 1 tài liệu được Index bằng chiến lược & mô hình Embedding này để AI có thể lấy ngữ cảnh.
             </p>
         </div>
 
-        <div style="display:flex; justify-content:flex-end; margin-top:2rem;">
-            <button type="submit" class="btn btn-primary">Tạo Experiment →</button>
+        <div style="display:flex; justify-content:flex-end; margin-top:1.5rem;">
+            <button type="submit" class="btn btn-primary">Tạo Experiment</button>
         </div>
     </form>
 </div>

@@ -15,8 +15,8 @@
     <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
         <div>
             <h1 style="display:flex; align-items:center; gap:0.5rem;">
-                <a href="/Subjects" style="color:var(--text-muted); text-decoration:none;">📚 Môn học</a> 
-                <span style="color:var(--text-muted);">/</span>
+                <a href="/Subjects" style="color:#6c757d; text-decoration:none;">Môn học</a> 
+                <span style="color:#6c757d;">/</span>
                 @Model.Subject.SubjectCode
             </h1>
             <p>@Model.Subject.SubjectName</p>
@@ -30,29 +30,29 @@
 
 @if (TempData["Success"] != null)
 {
-    <div class="alert alert-success" style="margin-bottom:1.5rem;">
-        ✅ @TempData["Success"]
+    <div class="alert alert-success" style="margin-bottom:1rem;">
+        @TempData["Success"]
     </div>
 }
 @if (TempData["Error"] != null)
 {
-    <div class="alert alert-error" style="margin-bottom:1.5rem;">
-        ⚠️ @TempData["Error"]
+    <div class="alert alert-error" style="margin-bottom:1rem;">
+        @TempData["Error"]
     </div>
 }
 
-<div style="display:grid; grid-template-columns:1fr; gap:1.5rem; margin-bottom:2rem;">
+<div style="margin-bottom:1.5rem;">
     <div class="card">
-        <h3 style="margin-bottom:1rem;">Thông tin môn học</h3>
-        <div style="display:flex; flex-direction:column; gap:0.75rem;">
-            <div><strong style="color:var(--text-muted);">Mã môn:</strong> @Model.Subject.SubjectCode</div>
-            <div><strong style="color:var(--text-muted);">Tên môn:</strong> @Model.Subject.SubjectName</div>
-            <div><strong style="color:var(--text-muted);">Mô tả:</strong> @(string.IsNullOrEmpty(Model.Subject.Description) ? "—" : Model.Subject.Description)</div>
+        <h3 style="margin-bottom:0.75rem;">Thông tin môn học</h3>
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+            <div><strong style="color:#6c757d;">Mã môn:</strong> @Model.Subject.SubjectCode</div>
+            <div><strong style="color:#6c757d;">Tên môn:</strong> @Model.Subject.SubjectName</div>
+            <div><strong style="color:#6c757d;">Mô tả:</strong> @(string.IsNullOrEmpty(Model.Subject.Description) ? "—" : Model.Subject.Description)</div>
         </div>
     </div>
 </div>
 
-<h2 style="margin-bottom:1rem; font-size:1.25rem;">Danh sách Chương học (@Model.Chapters.Count())</h2>
+<h2 style="margin-bottom:0.75rem; font-size:1.15rem;">Danh sách Chương học (@Model.Chapters.Count())</h2>
 <div class="card" style="padding:0;">
     <table>
         <thead>
@@ -73,7 +73,7 @@
                 <tr>
                     <td>@ch.OrderIndex</td>
                     <td style="font-weight:500;">@ch.ChapterName</td>
-                    <td><span style="color:var(--text-muted); font-size:0.9rem;">@(string.IsNullOrEmpty(ch.Description) ? "—" : ch.Description)</span></td>
+                    <td><span style="color:#6c757d; font-size:0.875rem;">@(string.IsNullOrEmpty(ch.Description) ? "—" : ch.Description)</span></td>
                     <td>@ch.DocumentCount file</td>
                     @if (Model.CanEdit)
                     {
@@ -90,7 +90,7 @@
             @if (!Model.Chapters.Any())
             {
                 <tr>
-                    <td colspan="@(Model.CanEdit ? 5 : 4)" style="text-align:center; padding:3rem; color:var(--text-muted);">
+                    <td colspan="@(Model.CanEdit ? 5 : 4)" style="text-align:center; padding:2rem; color:#6c757d;">
                         Chưa có chương học nào được tạo.
                     </td>
                 </tr>
@@ -102,28 +102,28 @@
 @if (Model.CanEdit)
 {
     <!-- Create Modal -->
-    <div id="create-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center;">
-        <div style="background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:2rem; width:100%; max-width:500px;">
-            <h3 style="color:#fff; margin-bottom:1.5rem;">Thêm chương học mới</h3>
+    <div id="create-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center;">
+        <div style="background:#fff; border:1px solid #dee2e6; border-radius:6px; padding:1.5rem; width:100%; max-width:500px;">
+            <h3 style="margin-bottom:1rem;">Thêm chương học mới</h3>
             <form method="post" asp-page-handler="CreateChapter" asp-route-id="@Model.Subject.SubjectId">
                 @Html.AntiForgeryToken()
                 
-                <div class="form-group" style="margin-bottom:1rem;">
+                <div class="form-group" style="margin-bottom:0.75rem;">
                     <label class="form-label">Tên chương</label>
                     <input type="text" asp-for="NewChapter.ChapterName" class="form-control" required placeholder="Ví dụ: Chapter 1 - Introduction" />
                 </div>
                 
-                <div class="form-group" style="margin-bottom:1rem;">
+                <div class="form-group" style="margin-bottom:0.75rem;">
                     <label class="form-label">Số thứ tự (Order)</label>
                     <input type="number" asp-for="NewChapter.OrderIndex" class="form-control" value="1" required />
                 </div>
                 
-                <div class="form-group" style="margin-bottom:1.5rem;">
+                <div class="form-group" style="margin-bottom:1rem;">
                     <label class="form-label">Mô tả (Tùy chọn)</label>
                     <textarea asp-for="NewChapter.Description" class="form-control" rows="3" placeholder="..."></textarea>
                 </div>
                 
-                <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
                     <button type="button" class="btn btn-secondary" onclick="hideCreateModal()">Huỷ</button>
                     <button type="submit" class="btn btn-primary">Tạo mới</button>
                 </div>
