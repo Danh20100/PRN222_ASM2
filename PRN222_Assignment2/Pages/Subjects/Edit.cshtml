@@ -22,25 +22,25 @@
 
 <div class="card" style="max-width: 600px;">
     <form method="post">
-        <div class="form-group" style="margin-bottom:1.5rem;">
+        <div class="form-group" style="margin-bottom:1rem;">
             <label class="form-label">Mã môn học</label>
             <input type="text" asp-for="SubjectDto.SubjectCode" class="form-control" required placeholder="VD: PRN222" />
-            <span asp-validation-for="SubjectDto.SubjectCode" class="text-danger" style="font-size:0.8rem; color:var(--error);"></span>
+            <span asp-validation-for="SubjectDto.SubjectCode" style="font-size:0.8rem; color:#dc3545;"></span>
         </div>
 
-        <div class="form-group" style="margin-bottom:1.5rem;">
+        <div class="form-group" style="margin-bottom:1rem;">
             <label class="form-label">Tên môn học</label>
             <input type="text" asp-for="SubjectDto.SubjectName" class="form-control" required placeholder="VD: C# Web Development" />
-            <span asp-validation-for="SubjectDto.SubjectName" class="text-danger" style="font-size:0.8rem; color:var(--error);"></span>
+            <span asp-validation-for="SubjectDto.SubjectName" style="font-size:0.8rem; color:#dc3545;"></span>
         </div>
 
-        <div class="form-group" style="margin-bottom:1.5rem;">
+        <div class="form-group" style="margin-bottom:1rem;">
             <label class="form-label">Mô tả chi tiết</label>
             <textarea asp-for="SubjectDto.Description" class="form-control" rows="4" placeholder="Nhập mô tả môn học..."></textarea>
-            <span asp-validation-for="SubjectDto.Description" class="text-danger" style="font-size:0.8rem; color:var(--error);"></span>
+            <span asp-validation-for="SubjectDto.Description" style="font-size:0.8rem; color:#dc3545;"></span>
         </div>
 
-        <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:2rem;">
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
             <a href="/Subjects" class="btn btn-secondary">Hủy bỏ</a>
             <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
         </div>
