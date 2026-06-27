@@ -1,11 +1,16 @@
 using BusinessLayer.DTOs;
 using BusinessLayer.Helpers;
+using BusinessLayer.Interfaces;
 using BusinessLayer.Strategies;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Repositories;
 using Microsoft.Extensions.Logging;
+using System.IO.Compression;
+using System.Text;
 using System.Text.Json;
+using System.Xml.Linq;
 using Microsoft.Extensions.DependencyInjection;
+using UglyToad.PdfPig;
 
 namespace BusinessLayer.Services;
 
@@ -26,21 +31,25 @@ public class DocumentService : IDocumentService
     private readonly IEnumerable<IChunkingStrategy> _chunkingStrategies;
     private readonly ILogger<DocumentService> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IDocumentRealtimeNotifier _documentRealtimeNotifier;
 
     private const string UploadDirectory = "wwwroot/uploads/documents";
+    private const string ExtractedTextDirectory = "wwwroot/uploads/extracted-text";
 
     public DocumentService(
         IUnitOfWork uow,
         EmbeddingProviderFactory embeddingFactory,
         IEnumerable<IChunkingStrategy> chunkingStrategies,
         ILogger<DocumentService> logger,
-        IServiceScopeFactory scopeFactory)
+        IServiceScopeFactory scopeFactory,
+        IDocumentRealtimeNotifier documentRealtimeNotifier)
     {
         _uow = uow;
         _embeddingFactory = embeddingFactory;
         _chunkingStrategies = chunkingStrategies;
         _logger = logger;
         _scopeFactory = scopeFactory;
+        _documentRealtimeNotifier = documentRealtimeNotifier;
     }
 
     public async Task<DocumentDto?> GetByIdAsync(int documentId)
@@ -120,6 +129,15 @@ public class DocumentService : IDocumentService
         int uploadedByUserId,
         CancellationToken cancellationToken = default)
     {
+        var normalizedOriginalFileName = NormalizeOriginalFileName(dto.OriginalFileName);
+        var isDuplicate = await _uow.Documents.AnyAsync(d =>
+            d.ChapterId == dto.ChapterId &&
+            d.OriginalFileName != null &&
+            d.OriginalFileName.ToLower() == normalizedOriginalFileName.ToLower());
+
+        if (isDuplicate)
+            throw new InvalidOperationException($"Tài liệu '{normalizedOriginalFileName}' đã tồn tại trong chương này.");
+
         // 1. Save file to disk
         var fileExtension = ("." + dto.FileType).ToLowerInvariant();
         var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
@@ -134,7 +152,7 @@ public class DocumentService : IDocumentService
         {
             ChapterId = dto.ChapterId,
             FileName = uniqueFileName,
-            OriginalFileName = dto.OriginalFileName,
+            OriginalFileName = normalizedOriginalFileName,
             FileType = dto.FileType.TrimStart('.'),
             FileSizeBytes = dto.FileSizeBytes,
             StoragePath = filePath,
@@ -143,6 +161,7 @@ public class DocumentService : IDocumentService
         };
         await _uow.Documents.AddAsync(document);
         await _uow.SaveChangesAsync();
+        await NotifyDocumentUpdateSafeAsync("create", document.DocumentId, document.Status, cancellationToken);
 
         // 3. Index asynchronously (background, fire-and-forget)
         _ = Task.Run(() => IndexDocumentAsync(document.DocumentId, dto.EmbeddingModelId,
@@ -181,6 +200,7 @@ public class DocumentService : IDocumentService
         document.Status = "Processing";
         scopedUow.Documents.Update(document);
         await scopedUow.SaveChangesAsync();
+        await NotifyDocumentUpdateSafeAsync("status", documentId, document.Status, cancellationToken);
 
         var startTime = DateTime.UtcNow;
         try
@@ -195,6 +215,12 @@ public class DocumentService : IDocumentService
             var text = await ExtractTextAsync(document.StoragePath!, document.FileType!);
             if (string.IsNullOrWhiteSpace(text))
                 throw new Exception("Could not extract text from document");
+
+            // Persist extracted plain text for traceability and debugging.
+            var extractedTextPath = GetExtractedTextPath(document.FileName!);
+            var extractedTextFolder = Path.GetDirectoryName(extractedTextPath)!;
+            Directory.CreateDirectory(extractedTextFolder);
+            await File.WriteAllTextAsync(extractedTextPath, text, Encoding.UTF8, cancellationToken);
 
             // Apply chunking strategy
             var strategy = scopedChunkingStrategies
@@ -246,11 +272,13 @@ public class DocumentService : IDocumentService
 
             // Update document status
             document.Status = "Indexed";
+            document.ErrorMessage = null;
             document.TotalChunks = chunks.Count;
             document.IndexedAt = DateTime.UtcNow;
             scopedUow.Documents.Update(document);
 
             await scopedUow.SaveChangesAsync();
+            await NotifyDocumentUpdateSafeAsync("status", documentId, document.Status, cancellationToken);
             _logger.LogInformation("Document {Id} indexed successfully with {Count} chunks", documentId, chunks.Count);
         }
         catch (Exception ex)
@@ -265,6 +293,7 @@ public class DocumentService : IDocumentService
                     doc.ErrorMessage = ex.Message.Length > 1900 ? ex.Message[..1900] : ex.Message;
                     scopedUow.Documents.Update(doc);
                     await scopedUow.SaveChangesAsync();
+                    await NotifyDocumentUpdateSafeAsync("status", documentId, doc.Status, cancellationToken);
                 }
             }
             catch (Exception saveEx)
@@ -276,63 +305,53 @@ public class DocumentService : IDocumentService
 
     private static async Task<string> ExtractTextAsync(string filePath, string fileType)
     {
-        return fileType.ToLower() switch
+        var normalizedFileType = fileType.Trim().TrimStart('.').ToLowerInvariant();
+
+        return normalizedFileType switch
         {
             "txt" or "md" => await File.ReadAllTextAsync(filePath),
             "pdf" => ExtractPdfText(filePath),
             "docx" => ExtractDocxText(filePath),
-            _ => await File.ReadAllTextAsync(filePath) // fallback
+            "doc" => throw new NotSupportedException("File type .doc is not supported yet. Please convert to .docx."),
+            _ => throw new NotSupportedException($"Unsupported file type '{fileType}'. Supported types: .pdf, .docx, .txt, .md.")
         };
     }
 
     private static string ExtractPdfText(string filePath)
     {
-        // Basic PDF text extraction — reads raw text between stream markers
-        // For production: use PdfPig or iTextSharp NuGet package
-        try
+        var builder = new StringBuilder();
+
+        using var pdf = PdfDocument.Open(filePath);
+        foreach (var page in pdf.GetPages())
         {
-            var content = File.ReadAllText(filePath, System.Text.Encoding.Latin1);
-            var sb = new System.Text.StringBuilder();
-            int pos = 0;
-            while ((pos = content.IndexOf("BT", pos, StringComparison.Ordinal)) != -1)
+            if (!string.IsNullOrWhiteSpace(page.Text))
             {
-                int end = content.IndexOf("ET", pos, StringComparison.Ordinal);
-                if (end == -1) break;
-                var block = content[(pos + 2)..end];
-                // Extract text from Tj and TJ operators
-                foreach (System.Text.RegularExpressions.Match m in
-                    System.Text.RegularExpressions.Regex.Matches(block, @"\(([^)]*)\)\s*Tj"))
-                    sb.Append(m.Groups[1].Value).Append(' ');
-                pos = end + 2;
+                builder.AppendLine(page.Text);
             }
-            return sb.ToString().Trim();
         }
-        catch
-        {
-            return File.ReadAllText(filePath, System.Text.Encoding.UTF8);
-        }
+
+        return builder.ToString().Trim();
     }
 
     private static string ExtractDocxText(string filePath)
     {
-        // Basic DOCX extraction — reads word/document.xml from zip
-        // For production: use DocumentFormat.OpenXml NuGet package
         try
         {
-            using var zip = System.IO.Compression.ZipFile.OpenRead(filePath);
+            using var zip = ZipFile.OpenRead(filePath);
             var entry = zip.GetEntry("word/document.xml");
             if (entry == null) return string.Empty;
 
             using var stream = entry.Open();
-            using var reader = new System.IO.StreamReader(stream);
-            var xml = reader.ReadToEnd();
+            var xml = XDocument.Load(stream);
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 
-            // Strip XML tags to get plain text
-            return System.Text.RegularExpressions.Regex.Replace(xml, "<[^>]+>", " ")
-                   .Replace("&amp;", "&").Replace("&lt;", "<").Replace("&gt;", ">")
-                   .Trim();
+            var paragraphs = xml.Descendants(w + "p")
+                .Select(p => string.Concat(p.Descendants(w + "t").Select(t => t.Value)).Trim())
+                .Where(text => !string.IsNullOrWhiteSpace(text));
+
+            return string.Join(Environment.NewLine + Environment.NewLine, paragraphs);
         }
-        catch
+        catch (InvalidDataException)
         {
             return string.Empty;
         }
@@ -347,9 +366,49 @@ public class DocumentService : IDocumentService
         if (document.StoragePath != null && File.Exists(document.StoragePath))
             File.Delete(document.StoragePath);
 
+        // Delete extracted text file from disk
+        if (!string.IsNullOrWhiteSpace(document.FileName))
+        {
+            var extractedTextPath = GetExtractedTextPath(document.FileName);
+            if (File.Exists(extractedTextPath))
+                File.Delete(extractedTextPath);
+        }
+
         _uow.Documents.Remove(document);
         await _uow.SaveChangesAsync();
+        await NotifyDocumentUpdateSafeAsync("delete", documentId, null);
         return true;
+    }
+
+    private static string GetExtractedTextPath(string documentFileName)
+    {
+        var baseName = Path.GetFileNameWithoutExtension(documentFileName);
+        var extractedFileName = $"{baseName}.txt";
+        return Path.Combine(Directory.GetCurrentDirectory(), ExtractedTextDirectory, extractedFileName);
+    }
+
+    private static string NormalizeOriginalFileName(string originalFileName)
+    {
+        if (string.IsNullOrWhiteSpace(originalFileName))
+            return "unnamed-file";
+
+        return Path.GetFileName(originalFileName).Trim();
+    }
+
+    private async Task NotifyDocumentUpdateSafeAsync(
+        string action,
+        int documentId,
+        string? status,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _documentRealtimeNotifier.NotifyDocumentUpdateAsync(action, documentId, status, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to push document realtime update for document {DocumentId}", documentId);
+        }
     }
 }
 

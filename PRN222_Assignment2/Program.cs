@@ -1,11 +1,13 @@
 using BusinessLayer.Models;
 using BusinessLayer.Services;
 using BusinessLayer.Strategies;
+using BusinessLayer.Interfaces;
 using DataAccessLayer.Context;
 using DataAccessLayer.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using PRN222_Assignment2.Hubs;
+using PRN222_Assignment2.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,6 +81,7 @@ builder.Services.AddSingleton<EmbeddingProviderFactory>(sp =>
 builder.Services.AddScoped<IFakeEmailService, FakeEmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISubjectService, SubjectService>();
+builder.Services.AddScoped<IDocumentRealtimeNotifier, SignalRDocumentRealtimeNotifier>();
 
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IChatService>(sp =>
@@ -135,6 +138,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
 app.MapHub<SubjectHub>("/subjectHub");
+app.MapHub<DocumentHub>("/documentHub");
 
 // ── Auto-apply EF Core Migrations on startup ──────────────────────────
 using (var scope = app.Services.CreateScope())

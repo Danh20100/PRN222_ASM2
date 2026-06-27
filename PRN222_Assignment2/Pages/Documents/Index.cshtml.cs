@@ -163,4 +163,35 @@ public class IndexModel : PageModel
 
         return RedirectToPage();
     }
+
+    public async Task<IActionResult> OnPostDeleteAsync(int documentId)
+    {
+        if (User.IsInRole("Admin"))
+        {
+            TempData["Error"] = "Quản trị viên không được phép xóa tài liệu.";
+            return RedirectToPage();
+        }
+
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+        var document = await _documentService.GetByIdAsync(documentId);
+        if (document == null)
+        {
+            TempData["Error"] = "Không tìm thấy tài liệu cần xóa.";
+            return RedirectToPage();
+        }
+
+        var chapter = await _uow.Chapters.GetByIdAsync(document.ChapterId);
+        if (chapter == null || !await _subjectService.IsSubjectHeadAsync(userId, chapter.SubjectId))
+        {
+            TempData["Error"] = "Bạn không có quyền xóa tài liệu này.";
+            return RedirectToPage();
+        }
+
+        var deleted = await _documentService.DeleteAsync(documentId);
+        TempData[deleted ? "Success" : "Error"] = deleted
+            ? "Đã xóa tài liệu thành công."
+            : "Xóa tài liệu thất bại.";
+
+        return RedirectToPage();
+    }
 }

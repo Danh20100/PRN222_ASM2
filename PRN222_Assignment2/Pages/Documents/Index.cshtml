@@ -102,6 +102,14 @@
                                     <button type="submit" class="btn btn-success btn-sm">🔄</button>
                                 </form>
                             }
+                            @if (User.IsInRole("Teacher"))
+                            {
+                                <form method="post" asp-page-handler="Delete" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài liệu này?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="documentId" value="@doc.DocumentId" />
+                                    <button type="submit" class="btn btn-error btn-sm">Xóa</button>
+                                </form>
+                            }
                         </div>
                     </td>
                 </tr>
@@ -169,6 +177,7 @@
 </div>
 
 @section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 <script>
 function showUploadModal() { document.getElementById('upload-modal').style.display = 'flex'; }
 function hideUploadModal() { document.getElementById('upload-modal').style.display = 'none'; }
@@ -176,11 +185,25 @@ document.getElementById('upload-modal').addEventListener('click', function(e) {
     if (e.target === this) hideUploadModal();
 });
 
-// Auto-refresh every 10s if any document is Processing
-@if (Model.Documents.Any(d => d.Status == "Processing"))
-{
-    <text>setTimeout(() => location.reload(), 10000);</text>
+let reloadScheduled = false;
+function scheduleReload() {
+    if (reloadScheduled) return;
+    reloadScheduled = true;
+    setTimeout(() => location.reload(), 400);
 }
+
+const documentConnection = new signalR.HubConnectionBuilder()
+    .withUrl("/documentHub")
+    .build();
+
+documentConnection.on("ReceiveDocumentUpdate", function (action, payload) {
+    console.log("Document SignalR:", action, payload);
+    scheduleReload();
+});
+
+documentConnection.start().catch(function (err) {
+    console.error("Document SignalR Error:", err.toString());
+});
 </script>
 }
 
