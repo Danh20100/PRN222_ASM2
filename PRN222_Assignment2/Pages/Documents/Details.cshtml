@@ -7,30 +7,21 @@
 
 <div class="page-header-row" style="margin-bottom: 1.5rem;">
     <div>
-        <h1 class="neo-doc-title">@(string.IsNullOrEmpty(Model.Document?.OriginalFileName) ? "Tài liệu" : System.IO.Path.GetFileNameWithoutExtension(Model.Document.OriginalFileName))</h1>
-        <div class="neo-metadata-row">
-            <div class="neo-metadata-item">
-                <i class="bi bi-file-earmark-text"></i> Loại file: @(fileType.ToUpper())
-            </div>
-            <div class="neo-metadata-item">
-                <i class="bi bi-clock"></i> Cập nhật: @(Model.Document?.IndexedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? Model.Document?.UploadedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "N/A")
-            </div>
-            <div class="neo-metadata-item">
-                <i class="bi bi-person"></i> Người tải: @(Model.Document?.UploadedByFullName ?? "lecturer")
-            </div>
+        <h1 class="dashboard-title">@(string.IsNullOrEmpty(Model.Document?.OriginalFileName) ? "Tài liệu" : System.IO.Path.GetFileNameWithoutExtension(Model.Document.OriginalFileName))</h1>
+        <p class="page-subtitle" style="margin-bottom:0;">
+            Loại file: <strong>@(fileType.ToUpper())</strong> &bull; 
+            Cập nhật: @(Model.Document?.IndexedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? Model.Document?.UploadedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "N/A") &bull; 
+            Người tải: @(Model.Document?.UploadedByFullName ?? "lecturer")
             @if (Model.Chunks.Any())
             {
-                <span class="neo-chunks-badge">
+                <span class="badge" style="background-color: var(--accent-light); color: var(--accent); margin-left: 0.5rem;">
                     <i class="bi bi-diagram-3"></i> @Model.Chunks.Count chunks
                 </span>
             }
-        </div>
+        </p>
     </div>
     <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items: center;">
-        <a href="/Documents/Download/@Model.Document?.DocumentId" class="neo-download-btn">
-            <i class="bi bi-download"></i> TẢI XUỐNG
-        </a>
-        <a href="javascript:history.back()" class="neo-secondary-btn">
+        <a href="javascript:history.back()" class="soft-btn btn-light">
             <i class="bi bi-arrow-left"></i> Quay lại
         </a>
     </div>
@@ -38,7 +29,7 @@
 
 @if (Model.Document == null)
 {
-    <div class="neo-alert neo-alert-danger">
+    <div class="alert alert-error">
         <i class="bi bi-exclamation-triangle-fill"></i> Không tìm thấy tài liệu.
     </div>
 }
@@ -57,8 +48,8 @@ else
 
     <!-- Tab Contents -->
     <div id="pane-tab-content" class="tab-pane" style="display: none;">
-        <div class="card" style="border: 2px solid #000000; box-shadow: 4px 4px 0px #000000;">
-            <h3 class="card-title" style="border-bottom: 2px solid #000000; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+        <div class="card">
+            <h3 class="card-title">
                 <i class="bi bi-file-text"></i> Nội dung trích xuất
             </h3>
             <div class="doc-preview" style="white-space: pre-wrap; word-break: break-word; line-height: 1.7; font-size: 0.95rem; max-height: 60vh; overflow-y: auto;">
@@ -71,19 +62,19 @@ else
         <!-- Status Alert Banner -->
         @if (Model.Document?.Status == "Indexed")
         {
-            <div class="neo-alert neo-alert-success">
+            <div class="alert alert-success" style="display: flex; align-items: center; gap: 0.5rem;">
                 <i class="bi bi-check-circle-fill" style="font-size: 1.2rem;"></i> Băm và Nhúng Vector thành công!
             </div>
         }
         else if (Model.Document?.Status == "Failed")
         {
-            <div class="neo-alert neo-alert-danger">
+            <div class="alert alert-error" style="display: flex; align-items: center; gap: 0.5rem;">
                 <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.2rem;"></i> Băm và Nhúng Vector thất bại! Lỗi: @Model.Document.ErrorMessage
             </div>
         }
         else
         {
-            <div class="neo-alert neo-alert-warning">
+            <div class="alert alert-warning" style="display: flex; align-items: center; gap: 0.5rem;">
                 <i class="bi bi-hourglass-split" style="font-size: 1.2rem;"></i> Đang xử lý băm & nhúng vector...
             </div>
         }
@@ -94,15 +85,15 @@ else
             </h3>
             @if (Model.Document?.Status == "Indexed")
             {
-                <span class="neo-status-badge"><i class="bi bi-check-lg"></i> ĐÃ VECTOR HÓA</span>
+                <span class="doc-status doc-status--indexed"><i class="bi bi-check-lg"></i> ĐÃ VECTOR HÓA</span>
             }
             else if (Model.Document?.Status == "Failed")
             {
-                <span class="neo-status-badge" style="background-color: #ef4444;"><i class="bi bi-x-lg"></i> LỖI VECTOR</span>
+                <span class="doc-status doc-status--failed"><i class="bi bi-x-lg"></i> LỖI VECTOR</span>
             }
             else
             {
-                <span class="neo-status-badge" style="background-color: #f59e0b;"><i class="bi bi-hourglass-split"></i> ĐANG XỬ LÝ</span>
+                <span class="doc-status doc-status--processing"><i class="bi bi-hourglass-split"></i> ĐANG XỬ LÝ</span>
             }
         </div>
 
@@ -122,9 +113,9 @@ else
         }
         else
         {
-            <div class="card" style="text-align:center; padding:3rem; border: 2px dashed #ccc; background:#fff;">
+            <div class="card" style="text-align:center; padding:3rem; border: 1px dashed var(--border); background:#fff;">
                 <p style="color:var(--text-muted); font-size:1.1rem; margin-bottom:1rem;">Chưa có dữ liệu chunk nào được tạo cho tài liệu này.</p>
-                <a href="javascript:history.back()" class="neo-secondary-btn">
+                <a href="javascript:history.back()" class="soft-btn btn-light">
                     <i class="bi bi-arrow-left"></i> Quay lại trang môn học
                 </a>
             </div>
