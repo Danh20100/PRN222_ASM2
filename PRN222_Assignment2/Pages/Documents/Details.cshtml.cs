@@ -19,6 +19,7 @@ public class DetailsModel : PageModel
     }
 
     public DocumentDto? Document { get; set; }
+    public string? PreviewText { get; set; }
     public int ChunkSize { get; set; } = 512;
     public List<ChunkDisplayDto> Chunks { get; set; } = new();
 
@@ -57,6 +58,10 @@ public class DetailsModel : PageModel
                 ChunkText = c.ChunkText
             })
             .ToListAsync();
+
+        PreviewText = await _documentService.GetPreviewTextAsync(id);
+        if (string.IsNullOrWhiteSpace(PreviewText))
+            PreviewText = "Không thể hiển thị nội dung. Vui lòng tải file về để xem.";
 
         return Page();
     }

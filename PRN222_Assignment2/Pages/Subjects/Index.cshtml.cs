@@ -105,7 +105,7 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostEditAsync()
     {
-        if (!User.IsInRole("Admin") && !User.IsInRole("Teacher"))
+        if (!User.IsInRole("Admin"))
         {
             TempData["Error"] = "Bạn không có quyền sửa môn học.";
             return RedirectToPage();
