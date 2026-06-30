@@ -1,3 +1,4 @@
+using BusinessLayer.DTOs;
 using BusinessLayer.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using PRN222_Assignment2.Hubs;
@@ -27,5 +28,12 @@ public class SignalRDocumentRealtimeNotifier : IDocumentRealtimeNotifier
         };
 
         return _hubContext.Clients.All.SendAsync("ReceiveDocumentUpdate", action, payload, cancellationToken);
+    }
+
+    public Task NotifyDocumentProgressAsync(
+        DocumentProgressUpdate progress,
+        CancellationToken cancellationToken = default)
+    {
+        return _hubContext.Clients.All.SendAsync("ReceiveDocumentProgress", progress, cancellationToken);
     }
 }

@@ -1,3 +1,5 @@
+using BusinessLayer.DTOs;
+
 namespace BusinessLayer.Interfaces;
 
 public interface IDocumentRealtimeNotifier
@@ -6,5 +8,9 @@ public interface IDocumentRealtimeNotifier
         string action,
         int documentId,
         string? status = null,
+        CancellationToken cancellationToken = default);
+
+    Task NotifyDocumentProgressAsync(
+        DocumentProgressUpdate progress,
         CancellationToken cancellationToken = default);
 }

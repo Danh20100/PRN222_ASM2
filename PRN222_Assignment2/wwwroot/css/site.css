@@ -763,6 +763,112 @@ td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); font-size:
 @media (max-width: 992px) {
     .doc-view-layout { grid-template-columns: 1fr; }
 }
+
+/* ── Upload / Index Progress ───────────────────── */
+.upload-progress-panel {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    width: min(420px, calc(100vw - 2rem));
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    padding: 1rem 1.15rem;
+    z-index: 300;
+}
+
+.upload-progress-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.upload-progress-file {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.upload-progress-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+}
+
+.progress-step {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+
+.progress-step.active {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+    font-weight: 600;
+}
+
+.progress-step.done {
+    background: #ecfdf5;
+    color: #059669;
+    border-color: #a7f3d0;
+}
+
+.upload-progress-bar-wrap {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.upload-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #2563eb, #10b981);
+    border-radius: 999px;
+    transition: width 0.35s ease;
+}
+
+.upload-progress-message {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.doc-inline-progress {
+    margin-top: 0.5rem;
+    width: 100%;
+}
+
+.doc-inline-progress-bar {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.doc-inline-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: #2563eb;
+    border-radius: 999px;
+    transition: width 0.35s ease;
+}
+
+.doc-inline-progress-text {
+    font-size: 0.75rem;
+    color: #2563eb;
+}
 .doc-actions { display: flex; gap: 0.5rem; align-items: center; }
 .doc-actions a, .doc-actions button {
     background: none; border: none; cursor: pointer;

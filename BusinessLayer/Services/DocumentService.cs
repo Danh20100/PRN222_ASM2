@@ -164,6 +164,19 @@ public class DocumentService : IDocumentService
         await _uow.SaveChangesAsync();
         await NotifyDocumentUpdateSafeAsync("create", document.DocumentId, document.Status, cancellationToken);
 
+        var chapter = await _uow.Chapters.GetByIdAsync(document.ChapterId);
+        await NotifyProgressAsync(new DocumentProgressUpdate
+        {
+            DocumentId = document.DocumentId,
+            ChapterId = document.ChapterId,
+            SubjectId = chapter?.SubjectId,
+            FileName = document.OriginalFileName,
+            Step = "upload",
+            Percent = 20,
+            Message = "Upload file thành công",
+            Status = document.Status
+        }, cancellationToken);
+
         var (embeddingModelId, chunkingStrategyId) = await ResolveIndexingConfigAsync(
             dto.EmbeddingModelId, dto.ChunkingStrategyId);
 
@@ -241,6 +254,21 @@ public class DocumentService : IDocumentService
         await scopedUow.SaveChangesAsync();
         await NotifyDocumentUpdateSafeAsync("status", documentId, document.Status, cancellationToken);
 
+        var chapter = await scopedUow.Chapters.GetByIdAsync(document.ChapterId);
+        var subjectId = chapter?.SubjectId;
+
+        await NotifyProgressAsync(new DocumentProgressUpdate
+        {
+            DocumentId = documentId,
+            ChapterId = document.ChapterId,
+            SubjectId = subjectId,
+            FileName = document.OriginalFileName,
+            Step = "processing",
+            Percent = 25,
+            Message = "Bắt đầu chunk & embed...",
+            Status = document.Status
+        }, cancellationToken);
+
         var startTime = DateTime.UtcNow;
         try
         {
@@ -251,9 +279,33 @@ public class DocumentService : IDocumentService
                 ?? throw new Exception($"ChunkingStrategy {chunkingStrategyId} not found");
 
             // Extract text from file
+            await NotifyProgressAsync(new DocumentProgressUpdate
+            {
+                DocumentId = documentId,
+                ChapterId = document.ChapterId,
+                SubjectId = subjectId,
+                FileName = document.OriginalFileName,
+                Step = "extract",
+                Percent = 35,
+                Message = "Đang trích xuất nội dung...",
+                Status = "Processing"
+            }, cancellationToken);
+
             var text = await ExtractTextAsync(document.StoragePath!, document.FileType!);
             if (string.IsNullOrWhiteSpace(text))
                 throw new Exception("Could not extract text from document");
+
+            await NotifyProgressAsync(new DocumentProgressUpdate
+            {
+                DocumentId = documentId,
+                ChapterId = document.ChapterId,
+                SubjectId = subjectId,
+                FileName = document.OriginalFileName,
+                Step = "extract",
+                Percent = 45,
+                Message = "Đã trích xuất nội dung",
+                Status = "Processing"
+            }, cancellationToken);
 
             // Persist extracted plain text for traceability and debugging.
             var extractedTextPath = GetExtractedTextPath(document.FileName!);
@@ -272,14 +324,46 @@ public class DocumentService : IDocumentService
             if (chunks.Count == 0)
                 throw new Exception("Chunking produced zero chunks");
 
+            await NotifyProgressAsync(new DocumentProgressUpdate
+            {
+                DocumentId = documentId,
+                ChapterId = document.ChapterId,
+                SubjectId = subjectId,
+                FileName = document.OriginalFileName,
+                Step = "chunk",
+                Percent = 50,
+                Message = $"Đã tạo {chunks.Count} chunks",
+                Status = "Processing",
+                TotalChunks = chunks.Count,
+                ProcessedChunks = chunks.Count
+            }, cancellationToken);
+
             _logger.LogInformation("Document {Id}: {Count} chunks created using {Strategy}",
                 documentId, chunks.Count, chunkingConfig.StrategyType);
 
             // Get embedding provider
             var provider = scopedEmbeddingFactory.Create(embeddingModel);
 
-            // Embed all chunks
-            var embeddings = await provider.EmbedBatchAsync(chunks, cancellationToken);
+            // Embed chunks one-by-one for progress reporting
+            var embeddings = new List<float[]>();
+            for (var i = 0; i < chunks.Count; i++)
+            {
+                embeddings.Add(await provider.EmbedAsync(chunks[i], cancellationToken));
+                var embedPercent = 50 + (int)Math.Round(40.0 * (i + 1) / chunks.Count);
+                await NotifyProgressAsync(new DocumentProgressUpdate
+                {
+                    DocumentId = documentId,
+                    ChapterId = document.ChapterId,
+                    SubjectId = subjectId,
+                    FileName = document.OriginalFileName,
+                    Step = "embed",
+                    Percent = embedPercent,
+                    Message = $"Đang embed chunk {i + 1}/{chunks.Count}...",
+                    Status = "Processing",
+                    TotalChunks = chunks.Count,
+                    ProcessedChunks = i + 1
+                }, cancellationToken);
+            }
 
             // Save chunks to DB
             var documentChunks = chunks
@@ -319,6 +403,19 @@ public class DocumentService : IDocumentService
 
             await scopedUow.SaveChangesAsync();
             await NotifyDocumentUpdateSafeAsync("status", documentId, document.Status, cancellationToken);
+            await NotifyProgressAsync(new DocumentProgressUpdate
+            {
+                DocumentId = documentId,
+                ChapterId = document.ChapterId,
+                SubjectId = subjectId,
+                FileName = document.OriginalFileName,
+                Step = "done",
+                Percent = 100,
+                Message = $"Hoàn tất — {chunks.Count} chunks đã embed",
+                Status = document.Status,
+                TotalChunks = chunks.Count,
+                ProcessedChunks = chunks.Count
+            }, cancellationToken);
             _logger.LogInformation("Document {Id} indexed successfully with {Count} chunks", documentId, chunks.Count);
         }
         catch (Exception ex)
@@ -334,6 +431,17 @@ public class DocumentService : IDocumentService
                     scopedUow.Documents.Update(doc);
                     await scopedUow.SaveChangesAsync();
                     await NotifyDocumentUpdateSafeAsync("status", documentId, doc.Status, cancellationToken);
+                    await NotifyProgressAsync(new DocumentProgressUpdate
+                    {
+                        DocumentId = documentId,
+                        ChapterId = doc.ChapterId,
+                        FileName = doc.OriginalFileName,
+                        Step = "failed",
+                        Percent = 100,
+                        Message = "Chunk & embed thất bại",
+                        Status = doc.Status,
+                        ErrorMessage = doc.ErrorMessage
+                    }, cancellationToken);
                 }
             }
             catch (Exception saveEx)
@@ -488,6 +596,20 @@ public class DocumentService : IDocumentService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to push document realtime update for document {DocumentId}", documentId);
+        }
+    }
+
+    private async Task NotifyProgressAsync(
+        DocumentProgressUpdate progress,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _documentRealtimeNotifier.NotifyDocumentProgressAsync(progress, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to push document progress for document {DocumentId}", progress.DocumentId);
         }
     }
 }

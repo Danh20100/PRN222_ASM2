@@ -140,15 +140,33 @@ public class DetailsModel : PageModel
         try
         {
             var result = await _documentService.UploadAndIndexAsync(dto, userId);
-            TempData["Success"] = result.Status switch
+            var message = result.Status switch
             {
                 "Indexed" => $"Đã upload và chunk & embed thành công ({result.TotalChunks} chunks).",
                 "Failed" => $"Upload xong nhưng chunk & embed thất bại: {result.ErrorMessage}",
                 _ => "Đã upload tài liệu thành công."
             };
+
+            if (IsAjaxRequest())
+            {
+                return new JsonResult(new
+                {
+                    success = result.Status != "Failed",
+                    documentId = result.DocumentId,
+                    status = result.Status,
+                    totalChunks = result.TotalChunks,
+                    errorMessage = result.ErrorMessage,
+                    message
+                });
+            }
+
+            TempData["Success"] = message;
         }
         catch (Exception ex)
         {
+            if (IsAjaxRequest())
+                return new JsonResult(new { success = false, message = ex.Message });
+
             TempData["Error"] = $"Lỗi upload: {ex.Message}";
         }
         return RedirectToPage(new { id });
@@ -199,17 +217,45 @@ public class DetailsModel : PageModel
 
             await _documentService.ReIndexAsync(documentId, defaultModel, defaultStrategy);
             var doc = await _documentService.GetByIdAsync(documentId);
-            TempData["Success"] = doc?.Status switch
+            var message = doc?.Status switch
             {
                 "Indexed" => $"Chunk & embed thành công ({doc.TotalChunks} chunks).",
                 "Failed" => $"Chunk & embed thất bại: {doc.ErrorMessage}",
                 _ => "Đã chạy chunk & embed."
             };
+
+            if (IsAjaxRequest())
+            {
+                return new JsonResult(new
+                {
+                    success = doc?.Status == "Indexed",
+                    documentId,
+                    status = doc?.Status,
+                    totalChunks = doc?.TotalChunks,
+                    errorMessage = doc?.ErrorMessage,
+                    message
+                });
+            }
+
+            TempData["Success"] = message;
         }
         catch (Exception ex)
         {
+            if (IsAjaxRequest())
+                return new JsonResult(new { success = false, message = ex.Message });
+
             TempData["Error"] = $"Lỗi: {ex.Message}";
         }
         return RedirectToPage(new { id });
+    }
+
+    private bool IsAjaxRequest()
+    {
+        if (Request.Headers.TryGetValue("X-Requested-With", out var value) &&
+            value == "XMLHttpRequest")
+            return true;
+
+        return Request.Headers.Accept.Any(a =>
+            a?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true);
     }
 }

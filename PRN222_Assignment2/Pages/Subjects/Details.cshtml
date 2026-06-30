@@ -65,7 +65,7 @@
         <div class="doc-list">
             @foreach (var doc in ch.Documents.OrderByDescending(d => d.UploadedAt))
             {
-                <div class="doc-item">
+                <div class="doc-item" data-doc-id="@doc.DocumentId" data-doc-status="@doc.Status">
                     <div class="doc-info">
                         <div class="doc-name">
                             <span class="doc-badge">[@(doc.FileType?.ToUpper() ?? "FILE")]</span>
@@ -75,6 +75,10 @@
                             <span><i class="bi bi-person"></i> Upload bởi: <strong>@doc.UploadedByFullName</strong></span>
                             <span><i class="bi bi-clock"></i> @doc.UploadedAt.ToString("dd/MM/yyyy HH:mm")</span>
                             <span class="doc-status doc-status--@doc.Status.ToLower()">@doc.Status@(doc.TotalChunks.HasValue && doc.Status == "Indexed" ? $" ({doc.TotalChunks} chunks)" : "")</span>
+                        </div>
+                        <div class="doc-inline-progress" id="doc-progress-@doc.DocumentId" hidden>
+                            <div class="doc-inline-progress-bar"><div class="doc-inline-progress-fill"></div></div>
+                            <span class="doc-inline-progress-text">Đang xử lý...</span>
                         </div>
                     </div>
                     <div class="doc-actions">
@@ -86,11 +90,10 @@
                         {
                             <span class="doc-error-hint" title="@doc.ErrorMessage"><i class="bi bi-exclamation-triangle"></i> Lỗi embed</span>
                         }
-                        <a href="/Documents/View/@doc.DocumentId" class="doc-action-view"><i class="bi bi-eye"></i> Xem</a>
-                        <a href="/Documents/Download/@doc.DocumentId" class="doc-action-dl"><i class="bi bi-download"></i> Tải</a>
                         @if (Model.CanEdit)
                         {
-                            <form method="post" asp-page-handler="Chunk" asp-route-id="@Model.Subject.SubjectId" style="margin:0;">
+                            <form method="post" asp-page-handler="Chunk" asp-route-id="@Model.Subject.SubjectId"
+                                  class="doc-chunk-form" style="margin:0;">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="documentId" value="@doc.DocumentId" />
                                 <button type="submit" class="doc-action-chunk"><i class="bi bi-arrow-repeat"></i> Chunk & Embed</button>
@@ -127,6 +130,25 @@
 
 @if (Model.CanEdit)
 {
+    <!-- Upload progress panel -->
+    <div id="upload-progress-panel" class="upload-progress-panel" hidden>
+        <div class="upload-progress-header">
+            <strong><i class="bi bi-hourglass-split"></i> Tiến trình xử lý tài liệu</strong>
+            <span id="upload-progress-file" class="upload-progress-file"></span>
+        </div>
+        <div class="upload-progress-steps">
+            <span class="progress-step" data-step="upload"><i class="bi bi-cloud-upload"></i> Upload</span>
+            <span class="progress-step" data-step="extract"><i class="bi bi-file-text"></i> Trích xuất</span>
+            <span class="progress-step" data-step="chunk"><i class="bi bi-scissors"></i> Chunk</span>
+            <span class="progress-step" data-step="embed"><i class="bi bi-cpu"></i> Embed</span>
+            <span class="progress-step" data-step="done"><i class="bi bi-check-circle"></i> Hoàn tất</span>
+        </div>
+        <div class="upload-progress-bar-wrap">
+            <div id="upload-progress-bar" class="upload-progress-bar"></div>
+        </div>
+        <div id="upload-progress-message" class="upload-progress-message">Đang chuẩn bị...</div>
+    </div>
+
     <!-- Create Chapter Modal -->
     <div id="create-modal" class="modal-overlay">
         <div class="modal-content">
@@ -157,7 +179,7 @@
     <div id="upload-modal" class="modal-overlay">
         <div class="modal-content">
             <h3 class="modal-title"><i class="bi bi-upload"></i> Tải tài liệu lên</h3>
-            <form method="post" enctype="multipart/form-data" asp-page-handler="UploadDocument" asp-route-id="@Model.Subject.SubjectId">
+            <form method="post" enctype="multipart/form-data" asp-page-handler="UploadDocument" asp-route-id="@Model.Subject.SubjectId" id="upload-form">
                 @Html.AntiForgeryToken()
                 <div class="form-group" style="margin-bottom:0.75rem;">
                     <label class="form-label" style="font-weight:700;">Chương học</label>
@@ -215,7 +237,11 @@
     </div>
 
     @section Scripts {
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
         <script>
+            const SUBJECT_ID = @Model.Subject.SubjectId;
+            let reloadScheduled = false;
+
             function showCreateModal() { document.getElementById('create-modal').classList.add('show'); }
             function hideCreateModal() { document.getElementById('create-modal').classList.remove('show'); }
             document.getElementById('create-modal').addEventListener('click', function(e) { if (e.target === this) hideCreateModal(); });
@@ -223,6 +249,170 @@
             function showUploadModal() { document.getElementById('upload-modal').classList.add('show'); }
             function hideUploadModal() { document.getElementById('upload-modal').classList.remove('show'); }
             document.getElementById('upload-modal').addEventListener('click', function(e) { if (e.target === this) hideUploadModal(); });
+
+            const progressPanel = document.getElementById('upload-progress-panel');
+            const progressBar = document.getElementById('upload-progress-bar');
+            const progressMessage = document.getElementById('upload-progress-message');
+            const progressFile = document.getElementById('upload-progress-file');
+            let activeDocumentId = null;
+
+            function showProgressPanel(fileName) {
+                progressPanel.hidden = false;
+                progressFile.textContent = fileName || '';
+                updateProgressUi({ percent: 5, message: 'Đang upload file...', step: 'upload' });
+            }
+
+            function hideProgressPanel(delayMs) {
+                setTimeout(() => { progressPanel.hidden = true; }, delayMs || 0);
+            }
+
+            function updateProgressUi(data) {
+                const percent = Math.max(0, Math.min(100, data.percent || 0));
+                progressBar.style.width = percent + '%';
+                progressMessage.textContent = data.message || '';
+
+                document.querySelectorAll('.progress-step').forEach(el => el.classList.remove('active', 'done'));
+                const order = ['upload', 'extract', 'chunk', 'embed', 'done'];
+                const stepMap = { processing: 'extract', failed: 'embed' };
+                const current = stepMap[data.step] || data.step || 'upload';
+                const currentIdx = order.indexOf(current);
+                order.forEach((step, idx) => {
+                    const el = document.querySelector('.progress-step[data-step="' + step + '"]');
+                    if (!el) return;
+                    if (idx < currentIdx || (current === 'done' && step === 'done')) el.classList.add('done');
+                    else if (step === current) el.classList.add('active');
+                });
+
+                if (data.documentId) {
+                    activeDocumentId = data.documentId;
+                    const inline = document.getElementById('doc-progress-' + data.documentId);
+                    if (inline) {
+                        inline.hidden = false;
+                        inline.querySelector('.doc-inline-progress-fill').style.width = percent + '%';
+                        inline.querySelector('.doc-inline-progress-text').textContent = data.message || '';
+                    }
+                }
+            }
+
+            function scheduleReload() {
+                if (reloadScheduled) return;
+                reloadScheduled = true;
+                setTimeout(() => location.reload(), 800);
+            }
+
+            const documentConnection = new signalR.HubConnectionBuilder()
+                .withUrl('/documentHub')
+                .withAutomaticReconnect()
+                .build();
+
+            documentConnection.on('ReceiveDocumentProgress', function (data) {
+                if (data.subjectId && data.subjectId !== SUBJECT_ID) return;
+                updateProgressUi(data);
+            });
+
+            documentConnection.on('ReceiveDocumentUpdate', function (action, payload) {
+                if (payload.status === 'Indexed' || payload.status === 'Failed') {
+                    scheduleReload();
+                }
+            });
+
+            documentConnection.start().catch(err => console.error('SignalR:', err));
+
+            function getAntiForgeryToken(form) {
+                return form.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            }
+
+            async function postFormAjax(form) {
+                const formData = new FormData(form);
+                const token = getAntiForgeryToken(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'RequestVerificationToken': token
+                    }
+                });
+                return response.json();
+            }
+
+            document.getElementById('upload-form').addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const fileInput = this.querySelector('input[type="file"]');
+                const fileName = fileInput.files[0]?.name || 'Tài liệu';
+                hideUploadModal();
+                showProgressPanel(fileName);
+                updateProgressUi({ percent: 8, message: 'Đang gửi file lên server...', step: 'upload' });
+
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+
+                try {
+                    const result = await postFormAjax(this);
+                    if (result.success) {
+                        updateProgressUi({
+                            documentId: result.documentId,
+                            percent: 100,
+                            message: result.message,
+                            step: 'done'
+                        });
+                        hideProgressPanel(1500);
+                        scheduleReload();
+                    } else {
+                        updateProgressUi({
+                            documentId: result.documentId,
+                            percent: 100,
+                            message: result.message || 'Thất bại',
+                            step: 'failed'
+                        });
+                        progressMessage.style.color = '#dc2626';
+                        hideProgressPanel(3000);
+                        scheduleReload();
+                    }
+                } catch (err) {
+                    updateProgressUi({ percent: 100, message: 'Lỗi upload: ' + err.message, step: 'failed' });
+                    progressMessage.style.color = '#dc2626';
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            });
+
+            document.querySelectorAll('.doc-chunk-form').forEach(form => {
+                form.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const docId = this.querySelector('input[name="documentId"]')?.value;
+                    const docItem = this.closest('.doc-item');
+                    const fileName = docItem?.querySelector('.doc-name')?.textContent?.trim() || 'Tài liệu';
+
+                    showProgressPanel(fileName);
+                    updateProgressUi({ documentId: parseInt(docId), percent: 20, message: 'Đang chunk & embed lại...', step: 'processing' });
+
+                    const btn = this.querySelector('button[type="submit"]');
+                    btn.disabled = true;
+
+                    try {
+                        const result = await postFormAjax(this);
+                        updateProgressUi({
+                            documentId: result.documentId || parseInt(docId),
+                            percent: result.success ? 100 : 100,
+                            message: result.message,
+                            step: result.success ? 'done' : 'failed'
+                        });
+                        hideProgressPanel(result.success ? 1200 : 3000);
+                        scheduleReload();
+                    } catch (err) {
+                        updateProgressUi({ percent: 100, message: 'Lỗi: ' + err.message, step: 'failed' });
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            });
+
+            document.querySelectorAll('[data-doc-status="Processing"], [data-doc-status="Pending"]').forEach(el => {
+                const docId = el.dataset.docId;
+                const inline = document.getElementById('doc-progress-' + docId);
+                if (inline) inline.hidden = false;
+            });
         </script>
     }
 }
