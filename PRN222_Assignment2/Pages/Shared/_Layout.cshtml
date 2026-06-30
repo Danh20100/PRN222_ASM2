@@ -6,7 +6,7 @@
     <title>@ViewData["Title"] — EduManager</title>
     <meta name="description" content="@(ViewData["Description"] ?? "Hệ thống quản lý học tập EduManager")" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
@@ -17,6 +17,8 @@
         var isTeacher = isAuthenticated && User.IsInRole("Teacher");
         var isStudent = isAuthenticated && User.IsInRole("Student");
         var displayName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "User";
+        var username = User.Identity?.Name ?? "—";
+        var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "—";
         var roleLabel = isAdmin ? "Quản trị viên" : isTeacher ? "Giảng viên" : "Sinh viên";
     }
 
@@ -82,7 +84,38 @@
                     <div class="app-header-title">EduManager Web App</div>
                     <div class="app-header-actions">
                         <span class="app-header-badge">@displayName</span>
-                        <span class="app-header-role">@roleLabel</span>
+                        <div class="app-header-user-menu">
+                            <button type="button" class="app-header-role" id="userMenuBtn" aria-expanded="false" aria-haspopup="true">
+                                @roleLabel
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                            <div class="app-header-user-panel" id="userMenuPanel" hidden>
+                                <div class="user-panel-header">
+                                    <span class="user-panel-avatar"><i class="bi bi-person-circle"></i></span>
+                                    <div>
+                                        <div class="user-panel-name">@displayName</div>
+                                        <div class="user-panel-role">@roleLabel</div>
+                                    </div>
+                                </div>
+                                <dl class="user-panel-info">
+                                    <div class="user-panel-row">
+                                        <dt>Tên đăng nhập</dt>
+                                        <dd>@username</dd>
+                                    </div>
+                                    <div class="user-panel-row">
+                                        <dt>Email</dt>
+                                        <dd>@email</dd>
+                                    </div>
+                                    <div class="user-panel-row">
+                                        <dt>Vai trò</dt>
+                                        <dd>@roleLabel</dd>
+                                    </div>
+                                </dl>
+                                <a href="/Profile" class="user-panel-link">
+                                    <i class="bi bi-person"></i> Xem hồ sơ đầy đủ
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </header>
 
@@ -91,6 +124,31 @@
                 </main>
             </div>
         </div>
+
+        <script>
+            (function () {
+                var btn = document.getElementById('userMenuBtn');
+                var panel = document.getElementById('userMenuPanel');
+                if (!btn || !panel) return;
+
+                function closeMenu() {
+                    panel.hidden = true;
+                    btn.setAttribute('aria-expanded', 'false');
+                    btn.classList.remove('is-open');
+                }
+
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var open = panel.hidden;
+                    panel.hidden = !open;
+                    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    btn.classList.toggle('is-open', open);
+                });
+
+                document.addEventListener('click', closeMenu);
+                panel.addEventListener('click', function (e) { e.stopPropagation(); });
+            })();
+        </script>
     }
     else
     {

@@ -50,8 +50,14 @@ var apiKeys = builder.Configuration
 
 // Validate Gemini key bắt buộc
 if (string.IsNullOrWhiteSpace(apiKeys.Gemini))
+{
     throw new InvalidOperationException(
         "Gemini API key chưa được cấu hình. Vui lòng thêm vào appsettings.json: ApiKeys:Gemini");
+}
+else
+{
+    Console.WriteLine("API Configuration loaded. Gemini key is present.");
+}
 
 // ── HttpClient (for embedding/AI calls) ──────────────────────────────
 builder.Services.AddHttpClient("EmbeddingClient", client =>

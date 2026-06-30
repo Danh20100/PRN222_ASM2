@@ -36,10 +36,9 @@ public class DetailsModel : PageModel
         Chapters = await _subjectService.GetChaptersAsync(id);
 
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        bool isAdmin = User.IsInRole("Admin");
         bool isHead = await _subjectService.IsSubjectHeadAsync(userId, id);
 
-        CanEdit = isAdmin || isHead;
+        CanEdit = isHead;
 
         if (CanEdit)
         {
@@ -53,10 +52,9 @@ public class DetailsModel : PageModel
     public async Task<IActionResult> OnPostCreateChapterAsync(int id)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        bool isAdmin = User.IsInRole("Admin");
         bool isHead = await _subjectService.IsSubjectHeadAsync(userId, id);
 
-        if (!isAdmin && !isHead)
+        if (!isHead)
         {
             TempData["Error"] = "Bạn không có quyền thao tác trên môn học này.";
             return RedirectToPage(new { id });
@@ -76,13 +74,49 @@ public class DetailsModel : PageModel
         return RedirectToPage(new { id });
     }
 
+    public async Task<IActionResult> OnPostEditChapterAsync(int id, int chapterId, string chapterName, int orderIndex)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+        bool isHead = await _subjectService.IsSubjectHeadAsync(userId, id);
+
+        if (!isHead)
+        {
+            TempData["Error"] = "Bạn không có quyền thao tác trên môn học này.";
+            return RedirectToPage(new { id });
+        }
+
+        try
+        {
+            var dto = new CreateChapterDto
+            {
+                SubjectId = id,
+                ChapterName = chapterName,
+                OrderIndex = orderIndex
+            };
+            var success = await _subjectService.UpdateChapterAsync(chapterId, dto);
+            if (success)
+            {
+                TempData["Success"] = "Đã cập nhật tên chương học thành công.";
+            }
+            else
+            {
+                TempData["Error"] = "Không tìm thấy chương học cần cập nhật.";
+            }
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"Lỗi: {ex.Message}";
+        }
+
+        return RedirectToPage(new { id });
+    }
+
     public async Task<IActionResult> OnPostDeleteChapterAsync(int id, int chapterId)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        bool isAdmin = User.IsInRole("Admin");
         bool isHead = await _subjectService.IsSubjectHeadAsync(userId, id);
 
-        if (!isAdmin && !isHead)
+        if (!isHead)
         {
             TempData["Error"] = "Bạn không có quyền thao tác trên môn học này.";
             return RedirectToPage(new { id });
@@ -106,10 +140,9 @@ public class DetailsModel : PageModel
         IFormFile uploadFile)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        bool isAdmin = User.IsInRole("Admin");
         bool isHead = await _subjectService.IsSubjectHeadAsync(userId, id);
 
-        if (!isAdmin && !isHead)
+        if (!isHead)
         {
             TempData["Error"] = "Bạn không có quyền thao tác trên môn học này.";
             return RedirectToPage(new { id });
@@ -175,10 +208,9 @@ public class DetailsModel : PageModel
     public async Task<IActionResult> OnPostDeleteDocAsync(int id, int documentId)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        bool isAdmin = User.IsInRole("Admin");
         bool isHead = await _subjectService.IsSubjectHeadAsync(userId, id);
 
-        if (!isAdmin && !isHead)
+        if (!isHead)
         {
             TempData["Error"] = "Bạn không có quyền thao tác trên môn học này.";
             return RedirectToPage(new { id });
@@ -199,10 +231,9 @@ public class DetailsModel : PageModel
     public async Task<IActionResult> OnPostChunkAsync(int id, int documentId)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-        bool isAdmin = User.IsInRole("Admin");
         bool isHead = await _subjectService.IsSubjectHeadAsync(userId, id);
 
-        if (!isAdmin && !isHead)
+        if (!isHead)
         {
             TempData["Error"] = "Bạn không có quyền thao tác trên môn học này.";
             return RedirectToPage(new { id });

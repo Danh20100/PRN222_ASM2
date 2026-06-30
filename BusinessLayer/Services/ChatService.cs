@@ -370,7 +370,7 @@ public class ChatService : IChatService
                         && int.TryParse(values.FirstOrDefault(), out int retryAfter))
                         delayMs = Math.Max(delayMs, retryAfter * 1000);
 
-                    _logger.LogWarning("Gemini chat 429. Retry {A}/{M} in {D}ms", attempt, maxRetries, delayMs);
+                    _logger.LogWarning("Gemini API rate limit (429) hit. Retry attempt {Attempt}/{MaxRetries} waiting {Delay}ms before retrying.", attempt, maxRetries, delayMs);
                     await Task.Delay(delayMs, cancellationToken);
                     continue;
                 }
@@ -379,8 +379,14 @@ public class ChatService : IChatService
                 if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
                 {
                     attempt++;
-                    if (attempt >= maxRetries) throw new Exception("Gemini API unavailable");
-                    await Task.Delay(3000 * attempt, cancellationToken);
+                    if (attempt >= maxRetries) 
+                    {
+                        _logger.LogError("Gemini API is unavailable after {MaxRetries} attempts.", maxRetries);
+                        throw new Exception("Gemini API unavailable");
+                    }
+                    var retryDelay = 3000 * attempt;
+                    _logger.LogWarning("Gemini API service unavailable (503). Retrying attempt {Attempt}/{MaxRetries} in {Delay}ms.", attempt, maxRetries, retryDelay);
+                    await Task.Delay(retryDelay, cancellationToken);
                     continue;
                 }
 

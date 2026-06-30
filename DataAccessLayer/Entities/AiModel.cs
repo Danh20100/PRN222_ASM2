@@ -7,12 +7,21 @@ namespace DataAccessLayer.Entities;
 /// </summary>
 public class AiModel
 {
+    /// <summary>
+    /// The unique identifier of the AI model.
+    /// </summary>
     [Key]
     public int AiModelId { get; set; }
 
+    /// <summary>
+    /// The technical name of the AI model (e.g., gemini-1.5-flash).
+    /// </summary>
     [Required, MaxLength(100)]
     public string ModelName { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The provider of the AI model (e.g., Gemini, OpenAI, Ollama).
+    /// </summary>
     [Required, MaxLength(50)]
     public string Provider { get; set; } = string.Empty; // Gemini | OpenAI | Ollama
 
