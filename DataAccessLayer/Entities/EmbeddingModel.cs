@@ -7,12 +7,21 @@ namespace DataAccessLayer.Entities;
 /// </summary>
 public class EmbeddingModel
 {
+    /// <summary>
+    /// The unique identifier of the embedding model.
+    /// </summary>
     [Key]
     public int EmbeddingModelId { get; set; }
 
+    /// <summary>
+    /// The technical name of the embedding model.
+    /// </summary>
     [Required, MaxLength(100)]
     public string ModelName { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The provider of the embedding model (e.g., Gemini, OpenAI, HuggingFace, Ollama).
+    /// </summary>
     [Required, MaxLength(50)]
     public string Provider { get; set; } = string.Empty; // Gemini | HuggingFace | OpenAI | Ollama
 

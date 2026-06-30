@@ -160,6 +160,124 @@ a:hover { color: var(--accent-hover); }
     font-weight: 600;
     padding: 0.35rem 0.85rem;
     border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: inherit;
+    transition: background 0.15s;
+}
+
+.app-header-role:hover,
+.app-header-role.is-open {
+    background: var(--accent-hover);
+}
+
+.app-header-role i {
+    font-size: 0.65rem;
+    transition: transform 0.15s;
+}
+
+.app-header-role.is-open i {
+    transform: rotate(180deg);
+}
+
+.app-header-user-menu {
+    position: relative;
+}
+
+.app-header-user-panel {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    width: 280px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    z-index: 200;
+    overflow: hidden;
+}
+
+.user-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.1rem;
+    background: var(--accent-light);
+    border-bottom: 1px solid var(--border);
+}
+
+.user-panel-avatar {
+    font-size: 2rem;
+    color: var(--accent);
+    line-height: 1;
+}
+
+.user-panel-name {
+    font-weight: 700;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.user-panel-role {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
+}
+
+.user-panel-info {
+    padding: 0.75rem 1.1rem;
+    margin: 0;
+}
+
+.user-panel-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.user-panel-row:last-child {
+    border-bottom: none;
+}
+
+.user-panel-row dt {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.user-panel-row dd {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--text);
+    font-weight: 600;
+    text-align: right;
+    word-break: break-word;
+}
+
+.user-panel-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.75rem 1.1rem;
+    background: var(--bg);
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-top: 1px solid var(--border);
+    transition: background 0.15s;
+}
+
+.user-panel-link:hover {
+    background: var(--accent-light);
+    color: var(--accent-hover);
 }
 
 .app-content {
