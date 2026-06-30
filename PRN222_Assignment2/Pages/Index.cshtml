@@ -2,36 +2,92 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Trang chủ";
-    ViewData["ActivePage"] = "Home";
+    ViewData["ActivePage"] = User.IsInRole("Admin") ? "Dashboard" : "Home";
 }
 
-<div class="page-header">
-    <h1>Hệ thống RAG LMS</h1>
-    <p>Chào mừng bạn đến với hệ thống quản lý học tập tích hợp AI (Retrieval-Augmented Generation).</p>
-</div>
+@if (User.IsInRole("Admin"))
+{
+    <div style="padding: 1rem 0;">
+        <h1 class="dashboard-title">TỔNG QUAN HỆ THỐNG</h1>
+        <div class="dashboard-layout">
+            <!-- Left Column -->
+            <div>
+                <div class="grid-2">
+                    <div class="soft-card">
+                        <div class="soft-card-icon">💵</div>
+                        <div class="soft-card-value">0đ</div>
+                        <div class="soft-card-label">DOANH THU (THÁNG)</div>
+                    </div>
+                    <div class="soft-card">
+                        <div class="soft-card-icon blue">👥</div>
+                        <div class="soft-card-value">3</div>
+                        <div class="soft-card-label">NGƯỜI DÙNG</div>
+                    </div>
+                    <div class="soft-card">
+                        <div class="soft-card-icon green">📖</div>
+                        <div class="soft-card-value">2</div>
+                        <div class="soft-card-label">MÔN HỌC</div>
+                    </div>
+                    <div class="soft-card">
+                        <div class="soft-card-icon yellow">👑</div>
+                        <div class="soft-card-value">5</div>
+                        <div class="soft-card-label">GÓI HỘI VIÊN</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <a href="/Admin/Users" class="soft-btn btn-blue" style="flex:1;">👤 QUẢN LÝ NGƯỜI DÙNG</a>
+                    <a href="/Subjects" class="soft-btn btn-green" style="flex:1;">📖 QUẢN LÝ MÔN HỌC</a>
+                </div>
+            </div>
+            
+            <!-- Right Column -->
+            <div>
+                <div class="quick-actions-panel">
+                    <h3 class="quick-actions-title">⚡ TÁC VỤ NHANH</h3>
+                    <a href="#" class="soft-btn btn-yellow btn-block">
+                        <span style="margin-right: 0.5rem; font-size: 1.2rem;">✈️</span> GỬI THÔNG BÁO
+                    </a>
+                    <a href="/Admin/Users" class="soft-btn btn-blue btn-block">
+                        <span style="margin-right: 0.5rem; font-size: 1.2rem;">👤+</span> THÊM NGƯỜI DÙNG
+                    </a>
+                    <a href="/Subjects/Create" class="soft-btn btn-green btn-block">
+                        <span style="margin-right: 0.5rem; font-size: 1.2rem;">📖+</span> THÊM MÔN HỌC
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="page-header">
+        <h1>Hệ thống RAG LMS</h1>
+        <p>Chào mừng bạn đến với hệ thống quản lý học tập tích hợp AI (Retrieval-Augmented Generation).</p>
+    </div>
 
-<div class="grid-3">
-    <div class="stat-card">
-        <div class="stat-value">Khám phá</div>
-        <div class="stat-label">Các môn học và tài liệu giảng dạy</div>
+    <div class="grid-3">
+        <div class="stat-card">
+            <div class="stat-value">Khám phá</div>
+            <div class="stat-label">Các môn học và tài liệu giảng dạy</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">AI Chat</div>
+            <div class="stat-label">Hỏi đáp trực tiếp dựa trên tài liệu</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">Benchmark</div>
+            <div class="stat-label">Đánh giá chất lượng của AI Model</div>
+        </div>
     </div>
-    <div class="stat-card">
-        <div class="stat-value">AI Chat</div>
-        <div class="stat-label">Hỏi đáp trực tiếp dựa trên tài liệu</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-value">Benchmark</div>
-        <div class="stat-label">Đánh giá chất lượng của AI Model</div>
-    </div>
-</div>
 
-<div class="card" style="margin-top: 1.5rem;">
-    <h3 style="margin-bottom: 0.5rem;">Hướng dẫn sử dụng</h3>
-    <p style="color: #6c757d; line-height: 1.6;">
-        Sử dụng menu phía trên để điều hướng: <br />
-        - <strong>Môn học:</strong> Xem danh sách các môn học bạn có quyền truy cập. <br />
-        - <strong>Tài liệu:</strong> Quản lý các file PDF/Word làm dữ liệu gốc cho AI. <br />
-        - <strong>Chat RAG:</strong> Giao tiếp với AI, AI sẽ trả lời dựa trên tài liệu đã upload. <br />
-    </p>
-    <a href="/Subjects" class="btn btn-primary" style="margin-top: 1rem;">Bắt đầu ngay</a>
-</div>
+    <div class="card" style="margin-top: 1.5rem;">
+        <h3 style="margin-bottom: 0.5rem;">Hướng dẫn sử dụng</h3>
+        <p style="color: #6c757d; line-height: 1.6;">
+            Sử dụng menu phía trên để điều hướng: <br />
+            - <strong>Môn học:</strong> Xem danh sách các môn học bạn có quyền truy cập. <br />
+            - <strong>Tài liệu:</strong> Quản lý các file PDF/Word làm dữ liệu gốc cho AI. <br />
+            - <strong>Chat RAG:</strong> Giao tiếp với AI, AI sẽ trả lời dựa trên tài liệu đã upload. <br />
+        </p>
+        <a href="/Subjects" class="btn btn-primary" style="margin-top: 1rem;">Bắt đầu ngay</a>
+    </div>
+}

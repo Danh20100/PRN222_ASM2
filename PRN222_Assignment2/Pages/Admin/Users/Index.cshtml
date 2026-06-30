@@ -5,16 +5,18 @@
     ViewData["ActivePage"] = "Users";
 }
 
-<div class="page-header">
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
-        <div>
-            <h1>Người dùng</h1>
-            <p>Quản lý tài khoản, Import CSV và phân quyền</p>
-        </div>
-        <div style="display:flex; gap:0.5rem;">
-            <button class="btn btn-success" onclick="showImportModal()">Import CSV</button>
-            <button class="btn btn-primary" onclick="showCreateModal()">+ Thêm User</button>
-        </div>
+<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom: 1.5rem; padding-top: 0.5rem;">
+    <h1 style="font-size: 1.5rem; font-weight: 800; text-transform: uppercase;">DANH SÁCH NGƯỜI DÙNG</h1>
+    <div style="display:flex; gap:0.75rem;">
+        <button class="btn" style="background-color: #198754; color: white; border: none; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px;" onclick="showCreateModal()">
+            <span style="margin-right:0.25rem;">👤+</span> THÊM NGƯỜI DÙNG
+        </button>
+        <button class="btn" style="background-color: #20c997; color: white; border: none; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px;">
+            <span style="margin-right:0.25rem;">✈️</span> GỬI THÔNG BÁO TỚI ALL
+        </button>
+        <button class="btn" style="background-color: #6c757d; color: white; border: none; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px;" onclick="showImportModal()">
+            IMPORT CSV
+        </button>
     </div>
 </div>
 
@@ -23,51 +25,45 @@
 @if (TempData["Error"] != null)
 { <div class="alert alert-error">@TempData["Error"]</div> }
 
-<div class="card" style="padding:0;">
-    <table>
+<div class="brutalist-table-container">
+    <table class="brutalist-table">
         <thead>
             <tr>
-                <th>Tài khoản</th>
-                <th>Họ tên</th>
-                <th>Role</th>
-                <th>Trạng thái</th>
-                <th>Ngày tạo</th>
-                <th>Hành động</th>
+                <th style="width: 40px; text-align: center;">[x]</th>
+                <th>Họ và Tên</th>
+                <th>Email</th>
+                <th>Vai Trò</th>
+                <th>Trạng Thái</th>
+                <th>Hành Động</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var user in Model.Users)
             {
                 <tr>
-                    <td>
-                        <div style="font-weight:500;">@user.Username</div>
-                        <div style="font-size:0.75rem; color:#6c757d;">@user.Email</div>
-                    </td>
-                    <td>@user.FullName</td>
-                    <td>
-                        <span class="badge badge-@(user.Role == "Admin" ? "admin" : user.Role == "Teacher" ? "teacher" : "student")">
-                            @user.Role
-                        </span>
-                    </td>
+                    <td style="text-align: center;"><input type="checkbox" style="cursor:pointer;" /></td>
+                    <td style="font-weight: 500;">@(string.IsNullOrEmpty(user.FullName) ? user.Username : user.FullName)</td>
+                    <td>@user.Email</td>
+                    <td>@(user.Role == "Admin" ? "ADMIN" : user.Role == "Teacher" ? "Giảng viên" : "Sinh viên")</td>
                     <td>
                         @if (user.IsActive)
                         {
-                            <span class="badge badge-indexed">Active</span>
+                            <span style="color: #198754; font-weight: 500;"><span class="status-dot status-active"></span> Hoạt động</span>
                         }
                         else
                         {
-                            <span class="badge badge-failed">Locked</span>
+                            <span style="color: #dc3545; font-weight: 500;"><span class="status-dot" style="background-color: #dc3545;"></span> Bị khóa</span>
                         }
                     </td>
-                    <td style="font-size:0.8rem;">@user.CreatedAt.ToString("dd/MM/yyyy")</td>
                     <td>
-                        <form method="post" asp-page-handler="ToggleActive" style="display:inline;">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="userId" value="@user.UserId" />
-                            <button type="submit" class="btn btn-@(user.IsActive ? "danger" : "success") btn-sm">
-                                @(user.IsActive ? "Khóa" : "Mở khóa")
-                            </button>
-                        </form>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <button type="button" style="background:none; border:none; color: #333; cursor:pointer;" title="Sửa" onclick="showEditModal(@user.UserId, '@user.FullName', '@user.Role')">✏️</button>
+                            <form method="post" asp-page-handler="DeleteUser" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn xóa người dùng này?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@user.UserId" />
+                                <button type="submit" style="background:none; border:none; color: #dc3545; cursor:pointer;" title="Xóa">🗑️</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
             }
@@ -137,6 +133,33 @@
     </div>
 </div>
 
+<!-- Edit User Modal -->
+<div id="edit-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center;">
+    <div style="background:#fff; border:1px solid #dee2e6; border-radius:6px; padding:1.5rem; width:100%; max-width:500px;">
+        <h3 style="margin-bottom:1rem;">✏️ Cập nhật thông tin</h3>
+        <form method="post" asp-page-handler="EditUser">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="editUserId" id="editUserId" />
+            <div class="form-group">
+                <label class="form-label">Họ tên</label>
+                <input type="text" name="UpdateInput.FullName" id="editFullName" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Vai trò (Role)</label>
+                <select name="UpdateInput.Role" id="editRole" class="form-control" required>
+                    <option value="Student">Sinh viên</option>
+                    <option value="Teacher">Giảng viên</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="hideEditModal()">Huỷ</button>
+                <button type="submit" class="btn btn-primary">Cập nhật</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @section Scripts {
 <script>
     function showImportModal() { document.getElementById('import-modal').style.display = 'flex'; }
@@ -146,5 +169,14 @@
     function showCreateModal() { document.getElementById('create-modal').style.display = 'flex'; }
     function hideCreateModal() { document.getElementById('create-modal').style.display = 'none'; }
     document.getElementById('create-modal').addEventListener('click', function(e) { if (e.target === this) hideCreateModal(); });
+    
+    function showEditModal(id, name, role) {
+        document.getElementById('editUserId').value = id;
+        document.getElementById('editFullName').value = name;
+        document.getElementById('editRole').value = role;
+        document.getElementById('edit-modal').style.display = 'flex';
+    }
+    function hideEditModal() { document.getElementById('edit-modal').style.display = 'none'; }
+    document.getElementById('edit-modal').addEventListener('click', function(e) { if (e.target === this) hideEditModal(); });
 </script>
 }

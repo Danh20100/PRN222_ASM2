@@ -15,6 +15,8 @@ public interface IAuthService
     Task<bool> ToggleActiveAsync(int userId);
     Task<bool> ChangePasswordAsync(int userId, string currentPassword, string newPassword);
     Task<(int successCount, int skipCount)> ImportUsersFromCsvAsync(Stream csvStream);
+    Task<bool> UpdateUserAsync(int userId, UpdateUserDto dto);
+    Task<bool> DeleteUserAsync(int userId);
 }
 
 public class AuthService : IAuthService
@@ -186,4 +188,28 @@ Vui lòng đăng nhập và đổi mật khẩu sớm nhất có thể.
         IsActive = user.IsActive,
         CreatedAt = user.CreatedAt
     };
+
+    public async Task<bool> UpdateUserAsync(int userId, UpdateUserDto dto)
+    {
+        var user = await _uow.Users.GetByIdAsync(userId);
+        if (user is null) return false;
+
+        user.FullName = dto.FullName;
+        user.Role = string.IsNullOrWhiteSpace(dto.Role) ? "Student" : dto.Role;
+        user.UpdatedAt = DateTime.UtcNow;
+        
+        _uow.Users.Update(user);
+        await _uow.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteUserAsync(int userId)
+    {
+        var user = await _uow.Users.GetByIdAsync(userId);
+        if (user is null) return false;
+
+        _uow.Users.Remove(user);
+        await _uow.SaveChangesAsync();
+        return true;
+    }
 }
