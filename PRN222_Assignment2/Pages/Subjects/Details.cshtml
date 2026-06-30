@@ -44,11 +44,11 @@
     <div class="chapter-card">
         <!-- Chapter Header -->
         <div class="chapter-header">
-            <h3 class="chapter-title">Chương @ch.OrderIndex: @ch.ChapterName</h3>
+            <h3 class="chapter-title">@ch.ChapterName</h3>
             @if (Model.CanEdit)
             {
                 <div class="chapter-actions">
-                    <button class="btn-edit-chapter"><i class="bi bi-pencil"></i> Sửa</button>
+                    <button type="button" class="btn-edit-chapter" onclick="showEditModal(@ch.ChapterId, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(ch.ChapterName))', @ch.OrderIndex)"><i class="bi bi-pencil"></i> Sửa</button>
                     <form method="post" asp-page-handler="DeleteChapter" asp-route-id="@Model.Subject.SubjectId"
                           onsubmit="return confirm('Bạn có chắc chắn muốn xóa chương này?');" style="margin:0;">
                         @Html.AntiForgeryToken()
@@ -80,14 +80,12 @@
                     <div class="doc-actions">
                         @if (doc.Status == "Indexed")
                         {
-                            <a href="/Documents/Details/@doc.DocumentId" class="doc-action-chunk"><i class="bi bi-diagram-3"></i> Chunks (@doc.TotalChunks)</a>
+                            <a href="/Documents/Details/@doc.DocumentId" class="doc-action-chunk"><i class="bi bi-eye"></i> Xem</a>
                         }
                         else if (doc.Status == "Failed" && !string.IsNullOrEmpty(doc.ErrorMessage))
                         {
                             <span class="doc-error-hint" title="@doc.ErrorMessage"><i class="bi bi-exclamation-triangle"></i> Lỗi embed</span>
                         }
-                        <a href="/Documents/View/@doc.DocumentId" class="doc-action-view"><i class="bi bi-eye"></i> Xem</a>
-                        <a href="/Documents/Download/@doc.DocumentId" class="doc-action-dl"><i class="bi bi-download"></i> Tải</a>
                         @if (Model.CanEdit)
                         {
                             <form method="post" asp-page-handler="Chunk" asp-route-id="@Model.Subject.SubjectId" style="margin:0;">
@@ -135,7 +133,7 @@
                 @Html.AntiForgeryToken()
                 <div class="form-group" style="margin-bottom:0.75rem;">
                     <label class="form-label" style="font-weight:700;">Tên chương</label>
-                    <input type="text" asp-for="NewChapter.ChapterName" class="form-control" required placeholder="Ví dụ: Entity Framework Core" />
+                    <input type="text" asp-for="NewChapter.ChapterName" class="form-control" required placeholder="Ví dụ: Chương 1: Mở đầu" />
                 </div>
                 <div class="form-group" style="margin-bottom:0.75rem;">
                     <label class="form-label" style="font-weight:700;">Số thứ tự</label>
@@ -153,6 +151,26 @@
         </div>
     </div>
 
+    <!-- Edit Chapter Modal -->
+    <div id="edit-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title"><i class="bi bi-pencil"></i> Chỉnh sửa tên chương</h3>
+            <form method="post" asp-page-handler="EditChapter" asp-route-id="@Model.Subject.SubjectId">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="chapterId" id="edit-chapter-id" />
+                <input type="hidden" name="orderIndex" id="edit-chapter-order" />
+                <div class="form-group" style="margin-bottom:1.25rem;">
+                    <label class="form-label" style="font-weight:700;">Tên chương mới</label>
+                    <input type="text" name="chapterName" id="edit-chapter-name" class="form-control" required placeholder="Ví dụ: Chương 1: Mở đầu" />
+                </div>
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="hideEditModal()">Huỷ</button>
+                    <button type="submit" class="btn-add-chapter">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Upload Document Modal -->
     <div id="upload-modal" class="modal-overlay">
         <div class="modal-content">
@@ -165,7 +183,7 @@
                         <option value="">-- Chọn chương --</option>
                         @foreach (var c in Model.Chapters.OrderBy(x => x.OrderIndex))
                         {
-                            <option value="@c.ChapterId">Chương @c.OrderIndex: @c.ChapterName</option>
+                            <option value="@c.ChapterId">@c.ChapterName</option>
                         }
                     </select>
                 </div>
@@ -223,6 +241,15 @@
             function showUploadModal() { document.getElementById('upload-modal').classList.add('show'); }
             function hideUploadModal() { document.getElementById('upload-modal').classList.remove('show'); }
             document.getElementById('upload-modal').addEventListener('click', function(e) { if (e.target === this) hideUploadModal(); });
+
+            function showEditModal(chapterId, chapterName, orderIndex) {
+                document.getElementById('edit-chapter-id').value = chapterId;
+                document.getElementById('edit-chapter-name').value = chapterName;
+                document.getElementById('edit-chapter-order').value = orderIndex;
+                document.getElementById('edit-modal').classList.add('show');
+            }
+            function hideEditModal() { document.getElementById('edit-modal').classList.remove('show'); }
+            document.getElementById('edit-modal').addEventListener('click', function(e) { if (e.target === this) hideEditModal(); });
         </script>
     }
 }

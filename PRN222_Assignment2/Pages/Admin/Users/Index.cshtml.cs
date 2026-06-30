@@ -32,9 +32,19 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostCreateUserAsync()
     {
+        // Remove UpdateInput errors when creating a user
+        foreach (var key in ModelState.Keys)
+        {
+            if (key.StartsWith(nameof(UpdateInput)))
+            {
+                ModelState.Remove(key);
+            }
+        }
+
         if (!ModelState.IsValid)
         {
-            TempData["Error"] = "Vui lòng kiểm tra lại thông tin đã nhập.";
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            TempData["Error"] = "Lỗi nhập liệu: " + string.Join(" ", errors);
             return RedirectToPage();
         }
 
@@ -60,9 +70,19 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostEditUserAsync(int editUserId)
     {
+        // Remove Input errors when editing a user
+        foreach (var key in ModelState.Keys)
+        {
+            if (key.StartsWith(nameof(Input)))
+            {
+                ModelState.Remove(key);
+            }
+        }
+
         if (!ModelState.IsValid)
         {
-            TempData["Error"] = "Vui lòng kiểm tra lại thông tin.";
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            TempData["Error"] = "Lỗi nhập liệu: " + string.Join(" ", errors);
             return RedirectToPage();
         }
 
