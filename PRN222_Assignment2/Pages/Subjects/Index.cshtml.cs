@@ -23,18 +23,35 @@ public class IndexModel : PageModel
     public bool IsTeacher { get; set; }
     public bool IsStudent { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? Filter { get; set; }
+
     public async Task OnGetAsync()
     {
         IsAdmin = User.IsInRole("Admin");
         IsTeacher = User.IsInRole("Teacher");
         IsStudent = User.IsInRole("Student");
 
-        if (IsTeacher)
+        if (IsAdmin)
         {
-            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (int.TryParse(userIdStr, out int userId))
+            AllTeachers = await _subjectService.GetTeachersAsync();
+            Subjects = await _subjectService.GetAllAsync();
+        }
+        else if (IsTeacher)
+        {
+            if (Filter == "mine")
             {
-                Subjects = await _subjectService.GetTeacherSubjectsAsync(userId);
+                var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdStr, out int userId))
+                {
+                    Subjects = await _subjectService.GetTeacherSubjectsAsync(userId);
+                }
+                ViewData["ActivePage"] = "MySubjects";
+            }
+            else
+            {
+                Subjects = await _subjectService.GetAllAsync();
+                ViewData["ActivePage"] = "Subjects";
             }
         }
         else
@@ -67,6 +84,57 @@ public class IndexModel : PageModel
         catch (Exception ex)
         {
             TempData["Error"] = $"Lỗi khi xóa môn học: {ex.Message}";
+        }
+
+        return RedirectToPage();
+    }
+
+    [BindProperty]
+    public int EditSubjectId { get; set; }
+
+    [BindProperty]
+    public string EditSubjectCode { get; set; } = string.Empty;
+
+    [BindProperty]
+    public string EditSubjectName { get; set; } = string.Empty;
+
+    [BindProperty]
+    public int? EditTeacherId { get; set; }
+
+    public IEnumerable<UserDto> AllTeachers { get; set; } = [];
+
+    public async Task<IActionResult> OnPostEditAsync()
+    {
+        if (!User.IsInRole("Admin") && !User.IsInRole("Teacher"))
+        {
+            TempData["Error"] = "Bạn không có quyền sửa môn học.";
+            return RedirectToPage();
+        }
+
+        try
+        {
+            var updateDto = new CreateSubjectDto 
+            { 
+                SubjectCode = EditSubjectCode,
+                SubjectName = EditSubjectName
+            };
+            var success = await _subjectService.UpdateAsync(EditSubjectId, updateDto);
+
+            if (success && EditTeacherId.HasValue && User.IsInRole("Admin"))
+            {
+                var teacherIds = new List<int> { EditTeacherId.Value };
+                await _subjectService.AssignTeachersAsync(EditSubjectId, teacherIds, teacherIds);
+            }
+
+            if (success)
+            {
+                await _hubContext.Clients.All.SendAsync("ReceiveSubjectUpdate", "update", new { subjectId = EditSubjectId, subjectCode = EditSubjectCode, subjectName = EditSubjectName });
+                TempData["Success"] = "Cập nhật môn học thành công.";
+            }
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"Lỗi: {ex.Message}";
         }
 
         return RedirectToPage();

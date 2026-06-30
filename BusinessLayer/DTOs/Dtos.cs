@@ -29,6 +29,12 @@ public class CreateUserDto
     public string? FullName { get; set; }
 }
 
+public class UpdateUserDto
+{
+    public string? FullName { get; set; }
+    public string Role { get; set; } = string.Empty;
+}
+
 // ── Subject / Chapter DTOs ───────────────────────────────────────────
 
 public class SubjectDto
@@ -58,6 +64,7 @@ public class ChapterDto
     public int OrderIndex { get; set; }
     public string? Description { get; set; }
     public int DocumentCount { get; set; }
+    public List<DocumentDto> Documents { get; set; } = new();
 }
 
 public class CreateChapterDto

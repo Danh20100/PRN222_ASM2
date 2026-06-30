@@ -22,6 +22,9 @@ public class IndexModel : PageModel
     [BindProperty]
     public CreateUserViewModel Input { get; set; } = new();
 
+    [BindProperty]
+    public UpdateUserDto UpdateInput { get; set; } = new();
+
     public async Task OnGetAsync()
     {
         Users = await _authService.GetAllUsersAsync();
@@ -55,11 +58,32 @@ public class IndexModel : PageModel
         return RedirectToPage();
     }
 
-    public async Task<IActionResult> OnPostToggleActiveAsync(int userId)
+    public async Task<IActionResult> OnPostEditUserAsync(int editUserId)
     {
-        var result = await _authService.ToggleActiveAsync(userId);
-        if (result) TempData["Success"] = "Đã cập nhật trạng thái User!";
-        else TempData["Error"] = "Cập nhật thất bại!";
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Vui lòng kiểm tra lại thông tin.";
+            return RedirectToPage();
+        }
+
+        try
+        {
+            var result = await _authService.UpdateUserAsync(editUserId, UpdateInput);
+            if (result) TempData["Success"] = "Cập nhật thành công!";
+            else TempData["Error"] = "Không tìm thấy user.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostDeleteUserAsync(int userId)
+    {
+        var result = await _authService.DeleteUserAsync(userId);
+        if (result) TempData["Success"] = "Đã xóa User!";
+        else TempData["Error"] = "Xóa thất bại!";
         
         return RedirectToPage();
     }

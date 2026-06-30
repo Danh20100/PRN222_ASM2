@@ -9,14 +9,19 @@ namespace PRN222_Assignment2.Pages.Subjects;
 public class DetailsModel : PageModel
 {
     private readonly ISubjectService _subjectService;
+    private readonly IDocumentService _documentService;
 
-    public DetailsModel(ISubjectService subjectService)
+    public DetailsModel(ISubjectService subjectService, IDocumentService documentService)
     {
         _subjectService = subjectService;
+        _documentService = documentService;
     }
 
     public SubjectDto? Subject { get; set; }
     public IEnumerable<ChapterDto> Chapters { get; set; } = [];
+
+    public IEnumerable<EmbeddingModelDto> EmbeddingModels { get; set; } = [];
+    public IEnumerable<ChunkingStrategyDto> ChunkingStrategies { get; set; } = [];
 
     [BindProperty]
     public CreateChapterDto NewChapter { get; set; } = new();
@@ -35,6 +40,12 @@ public class DetailsModel : PageModel
         bool isHead = await _subjectService.IsSubjectHeadAsync(userId, id);
 
         CanEdit = isAdmin || isHead;
+
+        if (CanEdit)
+        {
+            EmbeddingModels = await _subjectService.GetEmbeddingModelsAsync();
+            ChunkingStrategies = await _subjectService.GetChunkingStrategiesAsync();
+        }
 
         return Page();
     }
@@ -87,6 +98,107 @@ public class DetailsModel : PageModel
             TempData["Error"] = $"Lỗi: {ex.Message}";
         }
 
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostUploadDocumentAsync(
+        int id, int chapterId, int chunkingStrategyId, int embeddingModelId,
+        IFormFile uploadFile)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+        bool isAdmin = User.IsInRole("Admin");
+        bool isHead = await _subjectService.IsSubjectHeadAsync(userId, id);
+
+        if (!isAdmin && !isHead)
+        {
+            TempData["Error"] = "Bạn không có quyền thao tác trên môn học này.";
+            return RedirectToPage(new { id });
+        }
+
+        if (uploadFile == null || uploadFile.Length == 0)
+        {
+            TempData["Error"] = "Vui lòng chọn file để upload.";
+            return RedirectToPage(new { id });
+        }
+
+        using var ms = new MemoryStream();
+        await uploadFile.CopyToAsync(ms);
+
+        var ext = Path.GetExtension(uploadFile.FileName).TrimStart('.');
+
+        var dto = new UploadDocumentDto
+        {
+            ChapterId = chapterId,
+            EmbeddingModelId = embeddingModelId,
+            ChunkingStrategyId = chunkingStrategyId,
+            FileBytes = ms.ToArray(),
+            OriginalFileName = uploadFile.FileName,
+            FileType = ext.ToUpper(),
+            FileSizeBytes = uploadFile.Length
+        };
+
+        try
+        {
+            await _documentService.UploadAndIndexAsync(dto, userId);
+            TempData["Success"] = "Đã upload tài liệu thành công. Đang tiến hành xử lý...";
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"Lỗi upload: {ex.Message}";
+        }
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostDeleteDocAsync(int id, int documentId)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+        bool isAdmin = User.IsInRole("Admin");
+        bool isHead = await _subjectService.IsSubjectHeadAsync(userId, id);
+
+        if (!isAdmin && !isHead)
+        {
+            TempData["Error"] = "Bạn không có quyền thao tác trên môn học này.";
+            return RedirectToPage(new { id });
+        }
+
+        try
+        {
+            await _documentService.DeleteAsync(documentId);
+            TempData["Success"] = "Đã xóa tài liệu.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"Lỗi xóa tài liệu: {ex.Message}";
+        }
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostChunkAsync(int id, int documentId)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+        bool isAdmin = User.IsInRole("Admin");
+        bool isHead = await _subjectService.IsSubjectHeadAsync(userId, id);
+
+        if (!isAdmin && !isHead)
+        {
+            TempData["Error"] = "Bạn không có quyền thao tác trên môn học này.";
+            return RedirectToPage(new { id });
+        }
+
+        try
+        {
+            var defaultStrategy = (await _subjectService.GetChunkingStrategiesAsync())
+                .FirstOrDefault(s => s.IsDefault)?.ChunkingStrategyId ?? 1;
+            var defaultModel = (await _subjectService.GetEmbeddingModelsAsync())
+                .FirstOrDefault(m => m.IsDefault)?.EmbeddingModelId ?? 1;
+
+            await _documentService.ReIndexAsync(documentId, defaultModel, defaultStrategy);
+            TempData["Success"] = "Đã đưa tài liệu vào tiến trình xử lý lại (Chunk & Embed).";
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"Lỗi: {ex.Message}";
+        }
         return RedirectToPage(new { id });
     }
 }

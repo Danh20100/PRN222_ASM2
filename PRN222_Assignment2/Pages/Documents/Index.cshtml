@@ -6,20 +6,16 @@
 }
 
 <div class="page-header">
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; width:100%; flex-wrap:wrap; gap:1rem;">
         <div>
-            <h1>Tài liệu</h1>
-            <p>Upload và quản lý tài liệu học tập trong RAG pipeline</p>
+            <h1 style="font-size:1.8rem; font-weight:800; color:#3498db; text-transform:uppercase; margin-bottom:0.5rem;">LỊCH SỬ TÀI LIỆU ĐÃ TẢI LÊN</h1>
+            <p style="color:#6c757d; font-size:0.95rem;">Danh sách tất cả các tài liệu do bạn đăng tải. Lịch sử này được giữ nguyên ngay cả khi môn học được chuyển cho giảng viên khác phụ trách.</p>
         </div>
         @if (User.IsInRole("Admin"))
         {
             <div class="alert alert-info" style="margin-bottom:0; padding:0.35rem 0.75rem;">
                 <span style="font-size:0.8rem;">Admin chỉ có quyền xem tài liệu và Re-Index.</span>
             </div>
-        }
-        else if (User.IsInRole("Teacher") && Model.HeadSubjectIds.Any())
-        {
-            <button class="btn btn-primary" onclick="showUploadModal()">Upload tài liệu</button>
         }
     </div>
 </div>
@@ -30,10 +26,10 @@
 { <div class="alert alert-error">@TempData["Error"]</div> }
 
 <!-- Filter Bar -->
-<div class="card" style="padding:0.75rem; margin-bottom:0.75rem;">
-    <form method="get" style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
-        <select name="subjectId" class="form-control" style="width:auto;" onchange="this.form.submit()">
-            <option value="">Tất cả môn học</option>
+<div class="card" style="padding:1rem; margin-bottom:1.5rem; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+    <form method="get" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+        <select name="subjectId" class="form-control" style="width:250px;" onchange="this.form.submit()">
+            <option value="">-- Tất cả môn học --</option>
             @foreach (var s in Model.Subjects)
             {
                 <option value="@s.SubjectId" selected="@(Model.SelectedSubjectId == s.SubjectId)">
@@ -41,8 +37,8 @@
                 </option>
             }
         </select>
-        <select name="status" class="form-control" style="width:auto;" onchange="this.form.submit()">
-            <option value="">Tất cả trạng thái</option>
+        <select name="status" class="form-control" style="width:200px;" onchange="this.form.submit()">
+            <option value="">-- Tất cả trạng thái --</option>
             <option value="Pending" selected="@(Model.SelectedStatus == "Pending")">Pending</option>
             <option value="Processing" selected="@(Model.SelectedStatus == "Processing")">Processing</option>
             <option value="Indexed" selected="@(Model.SelectedStatus == "Indexed")">Indexed</option>
@@ -52,73 +48,45 @@
 </div>
 
 <!-- Documents Table -->
-<div class="card" style="padding:0;">
-    <table>
+<div class="card" style="padding:0; border-radius:8px; overflow:hidden; box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+    <table style="width:100%; border-collapse:collapse; background:#fff;">
         <thead>
-            <tr>
-                <th>Tên file</th>
-                <th>Môn học / Chương</th>
-                <th>Loại</th>
-                <th>Kích thước</th>
-                <th>Trạng thái</th>
-                <th>Số chunk</th>
-                <th>Upload lúc</th>
-                <th>Hành động</th>
+            <tr style="background:#f8f9fa; border-bottom:2px solid #dee2e6;">
+                <th style="padding:1rem; text-align:left; font-weight:800; font-size:0.85rem; color:#333; text-transform:uppercase;">Tên tài liệu</th>
+                <th style="padding:1rem; text-align:left; font-weight:800; font-size:0.85rem; color:#333; text-transform:uppercase;">Môn học</th>
+                <th style="padding:1rem; text-align:left; font-weight:800; font-size:0.85rem; color:#333; text-transform:uppercase;">Chương</th>
+                <th style="padding:1rem; text-align:left; font-weight:800; font-size:0.85rem; color:#333; text-transform:uppercase;">Người đăng</th>
+                <th style="padding:1rem; text-align:left; font-weight:800; font-size:0.85rem; color:#333; text-transform:uppercase;">Ngày đăng</th>
+                <th style="padding:1rem; text-align:center; font-weight:800; font-size:0.85rem; color:#333; text-transform:uppercase;">Loại</th>
+                <th style="padding:1rem; text-align:center; font-weight:800; font-size:0.85rem; color:#333; text-transform:uppercase;">Thao tác</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var doc in Model.Documents)
             {
-                <tr>
-                    <td>
-                        <div style="font-weight:500;">@doc.OriginalFileName</div>
-                        <div style="font-size:0.75rem; color:#6c757d;">@doc.UploadedByFullName</div>
+                <tr style="border-bottom:1px solid #dee2e6; transition:background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='transparent'">
+                    <td style="padding:1rem; font-weight:700; color:#333;">@doc.OriginalFileName</td>
+                    <td style="padding:1rem; color:#6c757d; font-weight:600;">@doc.SubjectName</td>
+                    <td style="padding:1rem; color:#6c757d;">@doc.ChapterName</td>
+                    <td style="padding:1rem; color:#3498db; font-weight:600;">@doc.UploadedByFullName</td>
+                    <td style="padding:1rem; color:#6c757d;">
+                        <div style="font-weight:600; color:#333;">@doc.UploadedAt.ToString("dd/MM/yyyy")</div>
+                        <div style="font-size:0.8rem;">@doc.UploadedAt.ToString("HH:mm")</div>
                     </td>
-                    <td>
-                        <div>@doc.SubjectName</div>
-                        <div style="font-size:0.75rem; color:#6c757d;">@doc.ChapterName</div>
+                    <td style="padding:1rem; text-align:center;">
+                        <span style="color:#0d6efd; font-weight:800;">@doc.FileType?.ToUpper()</span>
                     </td>
-                    <td><span class="badge badge-processing">@doc.FileType?.ToUpper()</span></td>
-                    <td>@FormatFileSize(doc.FileSizeBytes)</td>
-                    <td>
-                        <span class="badge badge-@doc.Status.ToLower()">@doc.Status</span>
-                        @if (doc.Status == "Failed" && doc.ErrorMessage != null)
-                        {
-                            <div style="font-size:0.7rem; color:#dc3545; margin-top:2px;" title="@doc.ErrorMessage">
-                                @doc.ErrorMessage[..Math.Min(50, doc.ErrorMessage.Length)]...
-                            </div>
-                        }
-                    </td>
-                    <td>@(doc.TotalChunks?.ToString() ?? "—")</td>
-                    <td style="font-size:0.8rem;">@doc.UploadedAt.ToString("dd/MM HH:mm")</td>
-                    <td>
-                        <div style="display:flex; gap:0.25rem;">
-                            <a href="/Documents/Details/@doc.DocumentId" class="btn btn-secondary btn-sm">Chi tiết</a>
-                            @if (doc.Status is "Failed" or "Indexed" && (User.IsInRole("Admin") || User.IsInRole("Teacher")))
-                            {
-                                <form method="post" asp-page-handler="ReIndex" style="display:inline;">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="documentId" value="@doc.DocumentId" />
-                                    <button type="submit" class="btn btn-success btn-sm">Re-Index</button>
-                                </form>
-                            }
-                            @if (User.IsInRole("Teacher"))
-                            {
-                                <form method="post" asp-page-handler="Delete" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài liệu này?');">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="documentId" value="@doc.DocumentId" />
-                                    <button type="submit" class="btn btn-error btn-sm">Xóa</button>
-                                </form>
-                            }
-                        </div>
+                    <td style="padding:1rem; text-align:center;">
+                        <a href="/Documents/View/@doc.DocumentId" class="btn" style="background:#e83e8c; color:#fff; font-weight:800; padding:0.4rem 1rem; border-radius:4px; text-decoration:none;">📥 TẢI XUỐNG</a>
                     </td>
                 </tr>
             }
             @if (!Model.Documents.Any())
             {
                 <tr>
-                    <td colspan="8" style="text-align:center; padding:2rem; color:#6c757d;">
-                        Chưa có tài liệu nào được upload
+                    <td colspan="7" style="text-align:center; padding:3rem; color:#6c757d;">
+                        <div style="font-size:2rem; margin-bottom:1rem;">📄</div>
+                        Không có tài liệu nào.
                     </td>
                 </tr>
             }
@@ -126,65 +94,9 @@
     </table>
 </div>
 
-<!-- Upload Modal -->
-<div id="upload-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center;">
-    <div style="background:#fff; border:1px solid #dee2e6; border-radius:6px; padding:1.5rem; width:100%; max-width:500px;">
-        <h3 style="margin-bottom:1rem;">Upload tài liệu</h3>
-        <form method="post" asp-page-handler="Upload" enctype="multipart/form-data">
-            @Html.AntiForgeryToken()
-            <div class="form-group">
-                <label class="form-label">Chương</label>
-                <select name="ChapterId" class="form-control" required id="chapter-select">
-                    <option value="">— Chọn chương —</option>
-                    @foreach (var ch in Model.AllChapters)
-                    {
-                        <option value="@ch.ChapterId">@ch.SubjectName / @ch.ChapterName</option>
-                    }
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Chunking Strategy</label>
-                <select name="ChunkingStrategyId" class="form-control" required>
-                    @foreach (var cs in Model.ChunkingStrategies)
-                    {
-                        <option value="@cs.ChunkingStrategyId" selected="@cs.IsDefault">
-                            @cs.StrategyName (@cs.StrategyType · @cs.ChunkSize tokens)
-                        </option>
-                    }
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Embedding Model</label>
-                <select name="EmbeddingModelId" class="form-control" required>
-                    @foreach (var em in Model.EmbeddingModels)
-                    {
-                        <option value="@em.EmbeddingModelId" selected="@em.IsDefault">
-                            @em.ModelName (@em.Provider)
-                        </option>
-                    }
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">File (PDF, DOCX, TXT, MD)</label>
-                <input type="file" name="UploadFile" class="form-control" accept=".pdf,.docx,.txt,.md" required />
-            </div>
-            <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-                <button type="button" class="btn btn-secondary" onclick="hideUploadModal()">Huỷ</button>
-                <button type="submit" class="btn btn-primary">Upload & Index</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 @section Scripts {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 <script>
-function showUploadModal() { document.getElementById('upload-modal').style.display = 'flex'; }
-function hideUploadModal() { document.getElementById('upload-modal').style.display = 'none'; }
-document.getElementById('upload-modal').addEventListener('click', function(e) {
-    if (e.target === this) hideUploadModal();
-});
-
 let reloadScheduled = false;
 function scheduleReload() {
     if (reloadScheduled) return;

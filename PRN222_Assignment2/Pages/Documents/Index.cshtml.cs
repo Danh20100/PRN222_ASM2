@@ -55,17 +55,17 @@ public class IndexModel : PageModel
         ChunkingStrategies = await _subjectService.GetChunkingStrategiesAsync();
         EmbeddingModels = await _subjectService.GetEmbeddingModelsAsync();
 
-        // Load all chapters for upload modal (only for subjects the teacher is Head of)
+        // Load all chapters sequentially (avoid DbContext concurrency)
         var uploadableSubjects = User.IsInRole("Admin") 
-            ? new List<SubjectDto>() // Admin cannot upload
+            ? new List<SubjectDto>()
             : Subjects.Where(s => HeadSubjectIds.Contains(s.SubjectId)).ToList();
 
-        AllChapters = (await Task.WhenAll(
-            uploadableSubjects.Select(s => _subjectService.GetChaptersAsync(s.SubjectId))))
-            .SelectMany(c => c)
-            .ToList();
+        var chapters = new List<ChapterDto>();
+        foreach (var s in uploadableSubjects)
+            chapters.AddRange(await _subjectService.GetChaptersAsync(s.SubjectId));
+        AllChapters = chapters;
 
-        // Load documents with filters
+        // Load documents sequentially
         IEnumerable<DocumentDto> docs;
         if (subjectId.HasValue)
             docs = await _documentService.GetBySubjectAsync(subjectId.Value);

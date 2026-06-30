@@ -118,7 +118,24 @@ public class SubjectService : ISubjectService
                 ChapterName = c.ChapterName,
                 OrderIndex = c.OrderIndex,
                 Description = c.Description,
-                DocumentCount = c.Documents.Count
+                DocumentCount = c.Documents.Count,
+                Documents = c.Documents.Select(d => new DocumentDto
+                {
+                    DocumentId = d.DocumentId,
+                    ChapterId = d.ChapterId,
+                    ChapterName = c.ChapterName,
+                    SubjectName = c.Subject.SubjectName,
+                    FileName = d.FileName,
+                    OriginalFileName = d.OriginalFileName,
+                    FileType = d.FileType,
+                    FileSizeBytes = d.FileSizeBytes,
+                    Status = d.Status,
+                    ErrorMessage = d.ErrorMessage,
+                    TotalChunks = d.TotalChunks,
+                    UploadedAt = d.UploadedAt,
+                    IndexedAt = d.IndexedAt,
+                    UploadedByFullName = d.UploadedBy.FullName
+                }).ToList()
             })
             .ToListAsync();
     }
@@ -146,9 +163,10 @@ public class SubjectService : ISubjectService
                 ChapterName = c.ChapterName,
                 OrderIndex = c.OrderIndex,
                 Description = c.Description,
-                DocumentCount = 0
+                DocumentCount = 0,
+                Documents = new List<DocumentDto>()
             })
-            .FirstAsync();
+            .FirstOrDefaultAsync();
     }
 
     public async Task<bool> UpdateChapterAsync(int chapterId, CreateChapterDto dto)

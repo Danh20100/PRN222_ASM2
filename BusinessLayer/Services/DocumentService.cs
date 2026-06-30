@@ -249,7 +249,7 @@ public class DocumentService : IDocumentService
                     EmbeddingModelId = embeddingModelId,
                     ChunkIndex = i,
                     ChunkText = chunkText,
-                    TokenCount = chunkText.Split(' ').Length,
+                    TokenCount = CountWords(chunkText),
                     EmbeddingJson = VectorHelper.SerializeEmbedding(embeddings[i]),
                     VectorDimension = embeddings[i].Length
                 })
@@ -393,6 +393,16 @@ public class DocumentService : IDocumentService
             return "unnamed-file";
 
         return Path.GetFileName(originalFileName).Trim();
+    }
+
+    private static int CountWords(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return 0;
+
+        return text
+            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
+            .Length;
     }
 
     private async Task NotifyDocumentUpdateSafeAsync(
