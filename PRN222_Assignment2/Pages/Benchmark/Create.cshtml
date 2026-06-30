@@ -5,14 +5,12 @@
     ViewData["ActivePage"] = "Benchmark";
 }
 
-<div class="page-header">
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
-        <div>
-            <h1>Tạo Experiment</h1>
-            <p>Khởi tạo cấu hình đánh giá (Model, Chunking, Top K)</p>
-        </div>
-        <a href="/Benchmark" class="btn btn-secondary">← Trở về</a>
+<div class="page-header-row">
+    <div>
+        <h1 class="dashboard-title" style="margin-bottom:0.25rem;">TẠO EXPERIMENT</h1>
+        <p class="page-subtitle" style="margin-bottom:0;">Khởi tạo cấu hình đánh giá (Model, Chunking, Top K)</p>
     </div>
+    <a href="/Benchmark" class="soft-btn btn-secondary">← Trở về</a>
 </div>
 
 @if (TempData["Error"] != null)

@@ -19,6 +19,7 @@ public class DetailsModel : PageModel
     }
 
     public DocumentDto? Document { get; set; }
+    public int ChunkSize { get; set; } = 512;
     public List<ChunkDisplayDto> Chunks { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync(int id)
@@ -26,6 +27,25 @@ public class DetailsModel : PageModel
         Document = await _documentService.GetByIdAsync(id);
         if (Document == null)
             return NotFound();
+
+        ChunkSize = await _uow.DocumentIndexes.Query()
+            .Where(i => i.DocumentId == id)
+            .Join(_uow.ChunkingStrategies.Query(),
+                i => i.ChunkingStrategyId,
+                s => s.ChunkingStrategyId,
+                (_, s) => s.ChunkSize)
+            .FirstOrDefaultAsync();
+
+        if (ChunkSize <= 0)
+        {
+            ChunkSize = await _uow.ChunkingStrategies.Query()
+                .Where(s => s.IsDefault)
+                .Select(s => s.ChunkSize)
+                .FirstOrDefaultAsync();
+        }
+
+        if (ChunkSize <= 0)
+            ChunkSize = 512;
 
         Chunks = await _uow.DocumentChunks.Query()
             .Where(c => c.DocumentId == id)

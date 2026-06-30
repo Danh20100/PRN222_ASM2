@@ -5,18 +5,12 @@
     ViewData["ActivePage"] = "Users";
 }
 
-<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom: 1.5rem; padding-top: 0.5rem;">
-    <h1 style="font-size: 1.5rem; font-weight: 800; text-transform: uppercase;">DANH SÁCH NGƯỜI DÙNG</h1>
-    <div style="display:flex; gap:0.75rem;">
-        <button class="btn" style="background-color: #198754; color: white; border: none; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px;" onclick="showCreateModal()">
-            <span style="margin-right:0.25rem;">👤+</span> THÊM NGƯỜI DÙNG
-        </button>
-        <button class="btn" style="background-color: #20c997; color: white; border: none; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px;">
-            <span style="margin-right:0.25rem;">✈️</span> GỬI THÔNG BÁO TỚI ALL
-        </button>
-        <button class="btn" style="background-color: #6c757d; color: white; border: none; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px;" onclick="showImportModal()">
-            IMPORT CSV
-        </button>
+<div class="page-header-row">
+    <h1 class="dashboard-title" style="margin-bottom:0;">QUẢN LÝ NGƯỜI DÙNG</h1>
+    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <button class="soft-btn btn-primary" onclick="showCreateModal()"><i class="bi bi-person-plus"></i> THÊM NGƯỜI DÙNG</button>
+        <button class="soft-btn btn-warm"><i class="bi bi-send"></i> GỬI THÔNG BÁO</button>
+        <button class="soft-btn btn-light" onclick="showImportModal()"><i class="bi bi-file-earmark-arrow-up"></i> IMPORT CSV</button>
     </div>
 </div>
 
@@ -48,20 +42,24 @@
                     <td>
                         @if (user.IsActive)
                         {
-                            <span style="color: #198754; font-weight: 500;"><span class="status-dot status-active"></span> Hoạt động</span>
+                            <span class="status-text-active"><span class="status-dot status-active"></span> Hoạt động</span>
                         }
                         else
                         {
-                            <span style="color: #dc3545; font-weight: 500;"><span class="status-dot" style="background-color: #dc3545;"></span> Bị khóa</span>
+                            <span class="status-text-inactive"><span class="status-dot status-inactive"></span> Bị khóa</span>
                         }
                     </td>
                     <td>
-                        <div style="display: flex; gap: 0.75rem;">
-                            <button type="button" style="background:none; border:none; color: #333; cursor:pointer;" title="Sửa" onclick="showEditModal(@user.UserId, '@user.FullName', '@user.Role')">✏️</button>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="button" class="btn-action btn-action-edit" title="Sửa" onclick="showEditModal(@user.UserId, '@user.FullName', '@user.Role')">
+                                <i class="bi bi-pencil"></i> SỬA
+                            </button>
                             <form method="post" asp-page-handler="DeleteUser" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn xóa người dùng này?');">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="userId" value="@user.UserId" />
-                                <button type="submit" style="background:none; border:none; color: #dc3545; cursor:pointer;" title="Xóa">🗑️</button>
+                                <button type="submit" class="btn-action btn-action-delete" title="Xóa">
+                                    <i class="bi bi-trash"></i> XÓA
+                                </button>
                             </form>
                         </div>
                     </td>
@@ -72,9 +70,9 @@
 </div>
 
 <!-- Import CSV Modal -->
-<div id="import-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center;">
-    <div style="background:#fff; border:1px solid #dee2e6; border-radius:6px; padding:1.5rem; width:100%; max-width:500px;">
-        <h3 style="margin-bottom:0.75rem;">Import CSV Users</h3>
+<div id="import-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 class="modal-title">Import CSV Users</h3>
         <p style="font-size:0.875rem; color:#6c757d; margin-bottom:1rem;">
             File CSV cần có các cột Header: <strong>Username, Email, FullName, Role, Password</strong>.
             Nếu Password bỏ trống, hệ thống sẽ tự sinh và gửi qua Email.
@@ -94,9 +92,9 @@
 </div>
 
 <!-- Create User Modal -->
-<div id="create-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center;">
-    <div style="background:#fff; border:1px solid #dee2e6; border-radius:6px; padding:1.5rem; width:100%; max-width:500px;">
-        <h3 style="margin-bottom:1rem;">+ Thêm người dùng mới</h3>
+<div id="create-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 class="modal-title">+ Thêm người dùng mới</h3>
         <form method="post" asp-page-handler="CreateUser">
             @Html.AntiForgeryToken()
             <div class="form-group">
@@ -134,9 +132,9 @@
 </div>
 
 <!-- Edit User Modal -->
-<div id="edit-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center;">
-    <div style="background:#fff; border:1px solid #dee2e6; border-radius:6px; padding:1.5rem; width:100%; max-width:500px;">
-        <h3 style="margin-bottom:1rem;">✏️ Cập nhật thông tin</h3>
+<div id="edit-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 class="modal-title"><i class="bi bi-pencil"></i> Cập nhật thông tin</h3>
         <form method="post" asp-page-handler="EditUser">
             @Html.AntiForgeryToken()
             <input type="hidden" name="editUserId" id="editUserId" />
@@ -162,21 +160,21 @@
 
 @section Scripts {
 <script>
-    function showImportModal() { document.getElementById('import-modal').style.display = 'flex'; }
-    function hideImportModal() { document.getElementById('import-modal').style.display = 'none'; }
+    function showImportModal() { document.getElementById('import-modal').classList.add('show'); }
+    function hideImportModal() { document.getElementById('import-modal').classList.remove('show'); }
     document.getElementById('import-modal').addEventListener('click', function(e) { if (e.target === this) hideImportModal(); });
 
-    function showCreateModal() { document.getElementById('create-modal').style.display = 'flex'; }
-    function hideCreateModal() { document.getElementById('create-modal').style.display = 'none'; }
+    function showCreateModal() { document.getElementById('create-modal').classList.add('show'); }
+    function hideCreateModal() { document.getElementById('create-modal').classList.remove('show'); }
     document.getElementById('create-modal').addEventListener('click', function(e) { if (e.target === this) hideCreateModal(); });
     
     function showEditModal(id, name, role) {
         document.getElementById('editUserId').value = id;
         document.getElementById('editFullName').value = name;
         document.getElementById('editRole').value = role;
-        document.getElementById('edit-modal').style.display = 'flex';
+        document.getElementById('edit-modal').classList.add('show');
     }
-    function hideEditModal() { document.getElementById('edit-modal').style.display = 'none'; }
+    function hideEditModal() { document.getElementById('edit-modal').classList.remove('show'); }
     document.getElementById('edit-modal').addEventListener('click', function(e) { if (e.target === this) hideEditModal(); });
 </script>
 }

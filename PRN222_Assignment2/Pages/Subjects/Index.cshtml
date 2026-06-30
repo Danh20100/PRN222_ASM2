@@ -5,13 +5,11 @@
     ViewData["ActivePage"] = "Subjects";
 }
 
-<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom: 1.5rem; padding-top: 0.5rem;">
-    <h1 style="font-size: 1.5rem; font-weight: 800; text-transform: uppercase;">DANH SÁCH MÔN HỌC</h1>
+<div class="page-header-row">
+    <h1 class="dashboard-title" style="margin-bottom:0;">QUẢN LÝ MÔN HỌC</h1>
     @if (Model.IsAdmin)
     {
-        <a href="/Subjects/Create" class="btn" style="background-color: #198754; color: white; border: none; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none;">
-            <span style="margin-right:0.25rem;">📖+</span> THÊM MÔN HỌC
-        </a>
+        <a href="/Subjects/Create" class="soft-btn btn-dark"><i class="bi bi-journal-plus"></i> THÊM MÔN HỌC</a>
     }
 </div>
 
@@ -35,25 +33,31 @@
         <tbody id="subjects-table-body">
             @foreach (var subject in Model.Subjects)
             {
-                <tr id="subject-@subject.SubjectId" style="cursor:pointer;" onclick="window.location='/Subjects/@subject.SubjectId'">
+                <tr id="subject-@subject.SubjectId" class="clickable" onclick="window.location='/Subjects/@subject.SubjectId'">
                     <td style="text-align: center;" onclick="event.stopPropagation();"><input type="checkbox" style="cursor:pointer;" /></td>
-                    <td style="font-weight: 600; color: #0d6efd;">@subject.SubjectCode</td>
-                    <td style="font-weight: 600; color:#333;" class="subject-name">@subject.SubjectName</td>
+                    <td class="text-code">@subject.SubjectCode</td>
+                    <td style="font-weight: 600;" class="subject-name">@subject.SubjectName</td>
                     <td class="subject-chapter-count">@subject.ChapterCount chương</td>
                     <td class="subject-doc-count">@subject.DocumentCount tài liệu</td>
                     <td onclick="event.stopPropagation();">
                         <div style="display: flex; gap: 0.75rem; align-items:center;">
                             @if (Model.IsAdmin || Model.IsTeacher)
                             {
-                                <button type="button" style="background:none; border:none; color: #0d6efd; cursor:pointer; font-size:0.85rem; font-weight:700;" title="Chi tiết" onclick="window.location='/Subjects/@subject.SubjectId'">👁️ Chi tiết</button>
-                                <button type="button" style="background:none; border:none; color: #333; cursor:pointer;" title="Sửa" onclick="showEditSubjectModal(@subject.SubjectId, '@subject.SubjectCode', '@subject.SubjectName')">✏️ Sửa</button>
+                                <button type="button" class="btn-action btn-action-detail" title="Chi tiết" onclick="window.location='/Subjects/@subject.SubjectId'">
+                                    <i class="bi bi-folder2-open"></i> CHI TIẾT
+                                </button>
+                                <button type="button" class="btn-action btn-action-edit" title="Sửa" onclick="showEditSubjectModal(@subject.SubjectId, '@subject.SubjectCode', '@subject.SubjectName')">
+                                    <i class="bi bi-pencil"></i> SỬA
+                                </button>
                             }
                             @if (Model.IsAdmin)
                             {
                                 <form method="post" asp-page-handler="Delete" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa môn học này?');">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="subjectId" value="@subject.SubjectId" />
-                                    <button type="submit" style="background:none; border:none; color: #dc3545; cursor:pointer;" title="Xóa">🗑️ Xóa</button>
+                                    <button type="submit" class="btn-action btn-action-delete" title="Xóa">
+                                        <i class="bi bi-trash"></i> XÓA
+                                    </button>
                                 </form>
                             }
                         </div>
@@ -69,9 +73,9 @@
 </div>
 
 <!-- Edit Subject Modal -->
-<div id="edit-subject-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center;">
-    <div style="background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:1.5rem; width:100%; max-width:500px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <h3 style="margin-bottom:1.5rem; color: #3498db; text-transform: uppercase; font-weight: 800;">CẬP NHẬT MÔN HỌC</h3>
+<div id="edit-subject-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 class="modal-title">CẬP NHẬT MÔN HỌC</h3>
         <form method="post" asp-page-handler="Edit">
             @Html.AntiForgeryToken()
             <input type="hidden" name="EditSubjectId" id="editSubId" />
@@ -102,7 +106,7 @@
 
             <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
                 <button type="button" class="btn btn-secondary" onclick="hideEditSubjectModal()">Huỷ</button>
-                <button type="submit" class="btn" style="background-color: #3498db; color: #fff; font-weight: 700; padding: 0.5rem 1.5rem;">LƯU THAY ĐỔI</button>
+                <button type="submit" class="soft-btn btn-dark"><i class="bi bi-floppy"></i> LƯU THAY ĐỔI</button>
             </div>
         </form>
     </div>
@@ -115,9 +119,9 @@
             document.getElementById('editSubId').value = id;
             document.getElementById('editSubCode').value = code;
             document.getElementById('editSubName').value = name;
-            document.getElementById('edit-subject-modal').style.display = 'flex';
+            document.getElementById('edit-subject-modal').classList.add('show');
         }
-        function hideEditSubjectModal() { document.getElementById('edit-subject-modal').style.display = 'none'; }
+        function hideEditSubjectModal() { document.getElementById('edit-subject-modal').classList.remove('show'); }
         document.getElementById('edit-subject-modal').addEventListener('click', function(e) { if (e.target === this) hideEditSubjectModal(); });
 
         const connection = new signalR.HubConnectionBuilder()
@@ -139,7 +143,7 @@
                 @if (User.IsInRole("Admin") || User.IsInRole("Teacher")) {
                     <text>
                     adminHtml += `
-                        <button type="button" style="background:none; border:none; color: #333; cursor:pointer;" title="Sửa" onclick="showEditSubjectModal(${data.subjectId}, '${data.subjectCode}', '${data.subjectName}')">✏️</button>
+                        <button type="button" class="btn-action btn-action-edit" title="Sửa" onclick="showEditSubjectModal(${data.subjectId}, '${data.subjectCode}', '${data.subjectName}')"><i class="bi bi-pencil"></i> SỬA</button>
                     `;
                     </text>
                 }
@@ -149,7 +153,7 @@
                         <form method="post" action="/Subjects?handler=Delete" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa môn học này?');">
                             <input name="__RequestVerificationToken" type="hidden" value="${document.querySelector('input[name=__RequestVerificationToken]')?.value || ''}">
                             <input type="hidden" name="subjectId" value="${data.subjectId}" />
-                            <button type="submit" style="background:none; border:none; color: #dc3545; cursor:pointer;" title="Xóa">🗑️</button>
+                            <button type="submit" class="btn-action btn-action-delete" title="Xóa"><i class="bi bi-trash"></i> XÓA</button>
                         </form>
                     `;
                     </text>
@@ -157,20 +161,20 @@
                 
                 newRow.innerHTML = `
                     <td style="text-align: center;"><input type="checkbox" style="cursor:pointer;" /></td>
-                    <td style="font-weight: 600; color: #0d6efd;">${data.subjectCode}</td>
-                    <td style="font-weight: 500;" class="subject-name">${data.subjectName}</td>
+                    <td class="text-code">${data.subjectCode}</td>
+                    <td style="font-weight: 600;" class="subject-name">${data.subjectName}</td>
                     <td class="subject-chapter-count">${data.chapterCount} chương</td>
                     <td class="subject-doc-count">${data.documentCount} tài liệu</td>
                     <td>
-                        <div style="display: flex; gap: 0.75rem;">
+                        <div style="display: flex; gap: 0.5rem;">
                             ${adminHtml}
-                            <a href="/Subjects/${data.subjectId}" style="color: #333; text-decoration: none;" title="Chi tiết">👁️</a>
+                            <a href="/Subjects/${data.subjectId}" class="btn-action btn-action-detail" title="Chi tiết"><i class="bi bi-folder2-open"></i> CHI TIẾT</a>
                         </div>
                     </td>
                 `;
                 tbody.appendChild(newRow);
                 newRow.style.transition = "background-color 0.5s";
-                newRow.style.backgroundColor = "#cfe2ff";
+                newRow.style.backgroundColor = "#e8e8e8";
                 setTimeout(() => newRow.style.backgroundColor = "", 1000);
             } 
             else if (action === "update") {

@@ -1,8 +1,10 @@
+using System.Text;
+using BusinessLayer.Helpers;
+
 namespace BusinessLayer.Strategies;
 
 /// <summary>
-/// Paragraph chunker — splits at double-newline boundaries.
-/// Respects maxChunkSize by merging small paragraphs.
+/// Paragraph chunker — splits at double-newline boundaries, then enforces max word count.
 /// </summary>
 public class ParagraphChunkingStrategy : IChunkingStrategy
 {
@@ -10,9 +12,9 @@ public class ParagraphChunkingStrategy : IChunkingStrategy
 
     public List<string> Chunk(string text, int chunkSize, int chunkOverlap)
     {
-        if (string.IsNullOrWhiteSpace(text)) return [];
+        if (string.IsNullOrWhiteSpace(text))
+            return [];
 
-        // Split on double newlines (paragraph breaks)
         var paragraphs = text
             .Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries)
             .Select(p => p.Trim())
@@ -20,28 +22,41 @@ public class ParagraphChunkingStrategy : IChunkingStrategy
             .ToList();
 
         var chunks = new List<string>();
-        var current = new System.Text.StringBuilder();
+        var current = new StringBuilder();
+        var currentWords = 0;
 
         foreach (var para in paragraphs)
         {
-            var paraWords = para.Split(' ').Length;
-            var currentWords = current.Length > 0
-                ? current.ToString().Split(' ').Length
-                : 0;
+            var paraWords = ChunkTextHelper.CountWords(para);
 
-            if (currentWords + paraWords > chunkSize && current.Length > 0)
+            // Single paragraph exceeds limit → hard-split it
+            if (paraWords > chunkSize)
             {
-                chunks.Add(current.ToString().Trim());
-                current.Clear();
+                FlushCurrent();
+                chunks.AddRange(ChunkTextHelper.SplitByWordCount(para, chunkSize, chunkOverlap));
+                continue;
             }
 
-            if (current.Length > 0) current.Append("\n\n");
+            if (currentWords + paraWords > chunkSize && current.Length > 0)
+                FlushCurrent();
+
+            if (current.Length > 0)
+                current.Append("\n\n");
             current.Append(para);
+            currentWords += paraWords;
         }
 
-        if (current.Length > 0)
-            chunks.Add(current.ToString().Trim());
+        FlushCurrent();
+        return ChunkTextHelper.EnforceMaxWords(chunks, chunkSize, chunkOverlap);
 
-        return chunks;
+        void FlushCurrent()
+        {
+            if (current.Length == 0)
+                return;
+
+            chunks.Add(current.ToString().Trim());
+            current.Clear();
+            currentWords = 0;
+        }
     }
 }

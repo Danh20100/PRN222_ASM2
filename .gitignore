@@ -6,6 +6,10 @@
 # dotenv files
 .env
 
+# Local secrets & user uploads (do not commit)
+PRN222_Assignment2/appsettings.Development.json
+PRN222_Assignment2/wwwroot/uploads/
+
 # User-specific files
 *.rsuser
 *.suo

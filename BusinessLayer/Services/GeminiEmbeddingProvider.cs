@@ -7,14 +7,22 @@ using Microsoft.Extensions.Logging;
 namespace BusinessLayer.Services;
 
 /// <summary>
-/// Gemini Embedding Provider using text-embedding-004 model.
-/// Implements exponential backoff for 429 Rate Limit and Quota errors.
+/// Gemini Embedding Provider — uses gemini-embedding-001 (text-embedding-004 was retired).
 /// </summary>
 public class GeminiEmbeddingProvider : IEmbeddingProvider
 {
+    private static readonly HashSet<string> DeprecatedModels = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "text-embedding-004",
+        "embedding-001"
+    };
+
+    private const string DefaultModel = "gemini-embedding-001";
+
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
     private readonly string _modelName;
+    private readonly int _outputDimensionality;
     private readonly ILogger<GeminiEmbeddingProvider> _logger;
 
     private const int MaxRetries = 5;
@@ -26,12 +34,21 @@ public class GeminiEmbeddingProvider : IEmbeddingProvider
         HttpClient httpClient,
         string apiKey,
         string modelName,
-        ILogger<GeminiEmbeddingProvider> logger)
+        ILogger<GeminiEmbeddingProvider> logger,
+        int outputDimensionality = 768)
     {
         _httpClient = httpClient;
         _apiKey = apiKey;
-        _modelName = modelName;
+        _modelName = NormalizeModelName(modelName);
+        _outputDimensionality = outputDimensionality;
         _logger = logger;
+
+        if (_modelName != modelName)
+        {
+            _logger.LogWarning(
+                "Gemini embedding model '{OldModel}' is deprecated; using '{NewModel}' instead.",
+                modelName, _modelName);
+        }
     }
 
     public async Task<float[]> EmbedAsync(string text, CancellationToken cancellationToken = default)
@@ -39,7 +56,8 @@ public class GeminiEmbeddingProvider : IEmbeddingProvider
         var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_modelName}:embedContent?key={_apiKey}";
         var payload = new
         {
-            model = $"models/{_modelName}",
+            taskType = "RETRIEVAL_DOCUMENT",
+            outputDimensionality = _outputDimensionality,
             content = new { parts = new[] { new { text } } }
         };
 
@@ -52,23 +70,35 @@ public class GeminiEmbeddingProvider : IEmbeddingProvider
             if (response.StatusCode == HttpStatusCode.TooManyRequests)
                 throw new RateLimitException("Gemini API rate limit hit (429)");
 
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(ct);
+                _logger.LogError(
+                    "Gemini embedContent failed ({Status}): {Body}",
+                    (int)response.StatusCode, errorBody);
+                throw new HttpRequestException(
+                    $"Gemini embedding API error {(int)response.StatusCode}: {ExtractErrorMessage(errorBody)}",
+                    null,
+                    response.StatusCode);
+            }
 
             var responseBody = await response.Content.ReadAsStringAsync(ct);
-            return ParseEmbedding(responseBody);
+            var embedding = ParseEmbedding(responseBody);
+
+            if (_modelName == DefaultModel && _outputDimensionality < 3072)
+                return NormalizeVector(embedding);
+
+            return embedding;
         }, cancellationToken);
     }
 
     public async Task<List<float[]>> EmbedBatchAsync(IEnumerable<string> texts, CancellationToken cancellationToken = default)
     {
         var result = new List<float[]>();
-        // Gemini embedding API doesn't support native batch — sequential with delay
         foreach (var text in texts)
         {
             cancellationToken.ThrowIfCancellationRequested();
             result.Add(await EmbedAsync(text, cancellationToken));
-
-            // Small delay between calls to respect rate limits (1 RPM for free tier)
             await Task.Delay(200, cancellationToken);
         }
         return result;
@@ -94,7 +124,6 @@ public class GeminiEmbeddingProvider : IEmbeddingProvider
                     throw;
                 }
 
-                // Exponential backoff: 1s, 2s, 4s, 8s, 16s
                 int delayMs = BaseDelayMs * (int)Math.Pow(2, attempt - 1);
                 _logger.LogWarning(
                     "Gemini rate limit hit. Retry {Attempt}/{MaxRetries} in {Delay}ms",
@@ -107,11 +136,25 @@ public class GeminiEmbeddingProvider : IEmbeddingProvider
                 attempt++;
                 if (attempt >= MaxRetries) throw;
                 int delayMs = BaseDelayMs * (int)Math.Pow(2, attempt - 1);
-                _logger.LogWarning("Gemini 429 HttpRequestException. Retry {Attempt}/{Max} in {Delay}ms",
-                    attempt, MaxRetries, delayMs);
                 await Task.Delay(delayMs, cancellationToken);
             }
         }
+    }
+
+    private static string NormalizeModelName(string modelName)
+    {
+        if (string.IsNullOrWhiteSpace(modelName) || DeprecatedModels.Contains(modelName))
+            return DefaultModel;
+        return modelName.Trim();
+    }
+
+    private static float[] NormalizeVector(float[] vector)
+    {
+        double magnitude = Math.Sqrt(vector.Sum(v => (double)v * v));
+        if (magnitude <= 0)
+            return vector;
+
+        return vector.Select(v => (float)(v / magnitude)).ToArray();
     }
 
     private static float[] ParseEmbedding(string json)
@@ -124,6 +167,25 @@ public class GeminiEmbeddingProvider : IEmbeddingProvider
         return values.EnumerateArray()
                      .Select(v => v.GetSingle())
                      .ToArray();
+    }
+
+    private static string ExtractErrorMessage(string errorBody)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(errorBody);
+            if (doc.RootElement.TryGetProperty("error", out var error) &&
+                error.TryGetProperty("message", out var message))
+            {
+                return message.GetString() ?? errorBody;
+            }
+        }
+        catch
+        {
+            // ignore parse errors
+        }
+
+        return string.IsNullOrWhiteSpace(errorBody) ? "Unknown error" : errorBody;
     }
 }
 

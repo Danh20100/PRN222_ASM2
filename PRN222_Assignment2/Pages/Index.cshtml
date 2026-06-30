@@ -2,92 +2,126 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Trang chủ";
-    ViewData["ActivePage"] = User.IsInRole("Admin") ? "Dashboard" : "Home";
+    ViewData["ActivePage"] = "Home";
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "User";
+    var roleLabel = User.IsInRole("Admin") ? "Quản trị viên" : User.IsInRole("Teacher") ? "Giảng viên" : "Sinh viên";
 }
+
+<h1 class="welcome-heading">
+    Chào mừng đến với Ứng dụng Quản lý Học tập — EduManager!
+</h1>
+
+<div class="home-top-row">
+    <div class="info-card">
+        <h2 class="info-card-title">Thông tin cá nhân</h2>
+        <p class="info-card-line"><strong>@fullName</strong></p>
+        <p class="info-card-line">Vai trò: @roleLabel</p>
+        <p class="info-card-line">Tài khoản: <strong>@User.Identity?.Name</strong></p>
+    </div>
+
+    <div class="home-quick-col">
+        @if (User.IsInRole("Admin"))
+        {
+            <a href="/Subjects" class="utility-card utility-card--sm">
+                <span class="utility-icon utility-icon--blue"><i class="bi bi-grid-3x3-gap"></i></span>
+                <span class="utility-label">Quản lý môn học</span>
+            </a>
+        }
+        else
+        {
+            <a href="/Subjects" class="utility-card utility-card--sm">
+                <span class="utility-icon utility-icon--blue"><i class="bi bi-grid-3x3-gap"></i></span>
+                <span class="utility-label">Xem môn học</span>
+            </a>
+        }
+        <form method="post" action="/Auth/Logout" style="margin:0;">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="utility-card utility-card--sm utility-card--btn">
+                <span class="utility-icon utility-icon--red"><i class="bi bi-box-arrow-right"></i></span>
+                <span class="utility-label">Đăng xuất</span>
+            </button>
+        </form>
+    </div>
+</div>
 
 @if (User.IsInRole("Admin"))
 {
-    <div style="padding: 1rem 0;">
-        <h1 class="dashboard-title">TỔNG QUAN HỆ THỐNG</h1>
-        <div class="dashboard-layout">
-            <!-- Left Column -->
-            <div>
-                <div class="grid-2">
-                    <div class="soft-card">
-                        <div class="soft-card-icon">💵</div>
-                        <div class="soft-card-value">0đ</div>
-                        <div class="soft-card-label">DOANH THU (THÁNG)</div>
-                    </div>
-                    <div class="soft-card">
-                        <div class="soft-card-icon blue">👥</div>
-                        <div class="soft-card-value">3</div>
-                        <div class="soft-card-label">NGƯỜI DÙNG</div>
-                    </div>
-                    <div class="soft-card">
-                        <div class="soft-card-icon green">📖</div>
-                        <div class="soft-card-value">2</div>
-                        <div class="soft-card-label">MÔN HỌC</div>
-                    </div>
-                    <div class="soft-card">
-                        <div class="soft-card-icon yellow">👑</div>
-                        <div class="soft-card-value">5</div>
-                        <div class="soft-card-label">GÓI HỘI VIÊN</div>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                    <a href="/Admin/Users" class="soft-btn btn-blue" style="flex:1;">👤 QUẢN LÝ NGƯỜI DÙNG</a>
-                    <a href="/Subjects" class="soft-btn btn-green" style="flex:1;">📖 QUẢN LÝ MÔN HỌC</a>
-                </div>
+    <section class="home-section">
+        <h2 class="section-heading">Tiện ích quản lý hệ thống</h2>
+        <div class="utility-grid">
+            <a href="/Admin/Users" class="utility-card">
+                <span class="utility-icon utility-icon--blue"><i class="bi bi-info-circle"></i></span>
+                <span class="utility-label">Quản lý người dùng</span>
+            </a>
+            <a href="/Subjects" class="utility-card">
+                <span class="utility-icon utility-icon--amber"><i class="bi bi-journal-bookmark"></i></span>
+                <span class="utility-label">Quản lý môn học</span>
+            </a>
+            <a href="/Subjects/Create" class="utility-card">
+                <span class="utility-icon utility-icon--purple"><i class="bi bi-plus-circle"></i></span>
+                <span class="utility-label">Thêm môn học mới</span>
+            </a>
+        </div>
+    </section>
+
+    <section class="home-section">
+        <h2 class="section-heading">Thống kê nhanh</h2>
+        <div class="utility-grid">
+            <div class="utility-card utility-card--stat">
+                <span class="utility-icon utility-icon--green"><i class="bi bi-currency-dollar"></i></span>
+                <span class="utility-stat">0đ</span>
+                <span class="utility-label">Doanh thu (tháng)</span>
             </div>
-            
-            <!-- Right Column -->
-            <div>
-                <div class="quick-actions-panel">
-                    <h3 class="quick-actions-title">⚡ TÁC VỤ NHANH</h3>
-                    <a href="#" class="soft-btn btn-yellow btn-block">
-                        <span style="margin-right: 0.5rem; font-size: 1.2rem;">✈️</span> GỬI THÔNG BÁO
-                    </a>
-                    <a href="/Admin/Users" class="soft-btn btn-blue btn-block">
-                        <span style="margin-right: 0.5rem; font-size: 1.2rem;">👤+</span> THÊM NGƯỜI DÙNG
-                    </a>
-                    <a href="/Subjects/Create" class="soft-btn btn-green btn-block">
-                        <span style="margin-right: 0.5rem; font-size: 1.2rem;">📖+</span> THÊM MÔN HỌC
-                    </a>
-                </div>
+            <div class="utility-card utility-card--stat">
+                <span class="utility-icon utility-icon--green"><i class="bi bi-people"></i></span>
+                <span class="utility-stat">3</span>
+                <span class="utility-label">Người dùng</span>
+            </div>
+            <div class="utility-card utility-card--stat">
+                <span class="utility-icon utility-icon--green"><i class="bi bi-journal-bookmark"></i></span>
+                <span class="utility-stat">2</span>
+                <span class="utility-label">Môn học</span>
             </div>
         </div>
-    </div>
+    </section>
+}
+else if (User.IsInRole("Teacher"))
+{
+    <section class="home-section">
+        <h2 class="section-heading">Tiện ích giảng dạy</h2>
+        <div class="utility-grid">
+            <a href="/Subjects?filter=mine" class="utility-card">
+                <span class="utility-icon utility-icon--blue"><i class="bi bi-person-workspace"></i></span>
+                <span class="utility-label">Môn phụ trách</span>
+            </a>
+            <a href="/Subjects?filter=all" class="utility-card">
+                <span class="utility-icon utility-icon--amber"><i class="bi bi-journal-bookmark"></i></span>
+                <span class="utility-label">Tất cả môn học</span>
+            </a>
+            <a href="/Profile" class="utility-card">
+                <span class="utility-icon utility-icon--purple"><i class="bi bi-person-gear"></i></span>
+                <span class="utility-label">Hồ sơ cá nhân</span>
+            </a>
+        </div>
+    </section>
 }
 else
 {
-    <div class="page-header">
-        <h1>Hệ thống RAG LMS</h1>
-        <p>Chào mừng bạn đến với hệ thống quản lý học tập tích hợp AI (Retrieval-Augmented Generation).</p>
-    </div>
-
-    <div class="grid-3">
-        <div class="stat-card">
-            <div class="stat-value">Khám phá</div>
-            <div class="stat-label">Các môn học và tài liệu giảng dạy</div>
+    <section class="home-section">
+        <h2 class="section-heading">Tiện ích học tập</h2>
+        <div class="utility-grid">
+            <a href="/Subjects" class="utility-card">
+                <span class="utility-icon utility-icon--blue"><i class="bi bi-journal-bookmark"></i></span>
+                <span class="utility-label">Danh sách môn học</span>
+            </a>
+            <a href="/Profile" class="utility-card">
+                <span class="utility-icon utility-icon--amber"><i class="bi bi-person"></i></span>
+                <span class="utility-label">Thông tin sinh viên</span>
+            </a>
+            <a href="/Profile" class="utility-card">
+                <span class="utility-icon utility-icon--purple"><i class="bi bi-shield-lock"></i></span>
+                <span class="utility-label">Đổi mật khẩu</span>
+            </a>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">AI Chat</div>
-            <div class="stat-label">Hỏi đáp trực tiếp dựa trên tài liệu</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">Benchmark</div>
-            <div class="stat-label">Đánh giá chất lượng của AI Model</div>
-        </div>
-    </div>
-
-    <div class="card" style="margin-top: 1.5rem;">
-        <h3 style="margin-bottom: 0.5rem;">Hướng dẫn sử dụng</h3>
-        <p style="color: #6c757d; line-height: 1.6;">
-            Sử dụng menu phía trên để điều hướng: <br />
-            - <strong>Môn học:</strong> Xem danh sách các môn học bạn có quyền truy cập. <br />
-            - <strong>Tài liệu:</strong> Quản lý các file PDF/Word làm dữ liệu gốc cho AI. <br />
-            - <strong>Chat RAG:</strong> Giao tiếp với AI, AI sẽ trả lời dựa trên tài liệu đã upload. <br />
-        </p>
-        <a href="/Subjects" class="btn btn-primary" style="margin-top: 1rem;">Bắt đầu ngay</a>
-    </div>
+    </section>
 }

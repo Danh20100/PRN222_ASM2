@@ -39,7 +39,8 @@ public class EmbeddingProviderFactory
                 httpClient,
                 _apiKeys.Gemini,
                 model.ModelName,
-                _loggerFactory.CreateLogger<GeminiEmbeddingProvider>()),
+                _loggerFactory.CreateLogger<GeminiEmbeddingProvider>(),
+                model.VectorDimension > 0 ? model.VectorDimension : 768),
 
             "HuggingFace" => new HuggingFaceEmbeddingProvider(
                 httpClient,

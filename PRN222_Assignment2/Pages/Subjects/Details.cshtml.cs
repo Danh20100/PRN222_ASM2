@@ -139,8 +139,13 @@ public class DetailsModel : PageModel
 
         try
         {
-            await _documentService.UploadAndIndexAsync(dto, userId);
-            TempData["Success"] = "Đã upload tài liệu thành công. Đang tiến hành xử lý...";
+            var result = await _documentService.UploadAndIndexAsync(dto, userId);
+            TempData["Success"] = result.Status switch
+            {
+                "Indexed" => $"Đã upload và chunk & embed thành công ({result.TotalChunks} chunks).",
+                "Failed" => $"Upload xong nhưng chunk & embed thất bại: {result.ErrorMessage}",
+                _ => "Đã upload tài liệu thành công."
+            };
         }
         catch (Exception ex)
         {
@@ -193,7 +198,13 @@ public class DetailsModel : PageModel
                 .FirstOrDefault(m => m.IsDefault)?.EmbeddingModelId ?? 1;
 
             await _documentService.ReIndexAsync(documentId, defaultModel, defaultStrategy);
-            TempData["Success"] = "Đã đưa tài liệu vào tiến trình xử lý lại (Chunk & Embed).";
+            var doc = await _documentService.GetByIdAsync(documentId);
+            TempData["Success"] = doc?.Status switch
+            {
+                "Indexed" => $"Chunk & embed thành công ({doc.TotalChunks} chunks).",
+                "Failed" => $"Chunk & embed thất bại: {doc.ErrorMessage}",
+                _ => "Đã chạy chunk & embed."
+            };
         }
         catch (Exception ex)
         {

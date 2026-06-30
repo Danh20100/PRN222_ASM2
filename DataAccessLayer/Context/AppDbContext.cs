@@ -251,11 +251,11 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<EmbeddingModel>().HasData(new EmbeddingModel
         {
             EmbeddingModelId = 1,
-            ModelName = "text-embedding-004",
+            ModelName = "gemini-embedding-001",
             Provider = "Gemini",
             ApiEndpoint = "https://generativelanguage.googleapis.com/v1beta",
             VectorDimension = 768,
-            Description = "Google Gemini text-embedding-004 (768 dims)",
+            Description = "Google Gemini gemini-embedding-001 (768 dims)",
             IsDefault = true,
             IsActive = true,
             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)

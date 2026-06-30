@@ -1,23 +1,23 @@
 using System.Text.RegularExpressions;
+using BusinessLayer.Helpers;
 
 namespace BusinessLayer.Strategies;
 
 /// <summary>
-/// Sentence chunker — splits at sentence boundaries and groups sentences 
-/// into chunks using a sliding window with overlap.
+/// Sentence chunker — groups sentences up to max word count, never exceeding chunkSize.
 /// </summary>
 public class SentenceChunkingStrategy : IChunkingStrategy
 {
     public string StrategyType => "Sentence";
 
-    // Matches sentence-ending punctuation followed by space/end
     private static readonly Regex SentenceRegex = new(
-        @"(?<=[.!?])\s+(?=[A-ZÀÁÂĂÃẠẢẤẦẨẪẬẮẰẲẴẶÉÈÊẼẺẸẾỀỂỄỆ])",
+        @"(?<=[.!?])\s+(?=[A-ZÀÁÂĂÃẠẢẤẦẨẪẬẮẰẲẴẶÉÈÊẼẺẸẾỀỂỄỆÍÌĨỈỊÓÒÔÕỌỐỒỔỖỘỚỜỞỠỢÚÙÛŨỤỨỪỬỮỰÝỲỶỸ])",
         RegexOptions.Compiled);
 
     public List<string> Chunk(string text, int chunkSize, int chunkOverlap)
     {
-        if (string.IsNullOrWhiteSpace(text)) return [];
+        if (string.IsNullOrWhiteSpace(text))
+            return [];
 
         var sentences = SentenceRegex
             .Split(text)
@@ -25,35 +25,44 @@ public class SentenceChunkingStrategy : IChunkingStrategy
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .ToArray();
 
+        if (sentences.Length == 0)
+            return ChunkTextHelper.SplitByWordCount(text, chunkSize, chunkOverlap);
+
         var chunks = new List<string>();
-        int start = 0;
+        var window = new System.Text.StringBuilder();
+        var wordCount = 0;
 
-        while (start < sentences.Length)
+        foreach (var sentence in sentences)
         {
-            var window = new System.Text.StringBuilder();
-            int wordCount = 0;
-            int end = start;
+            var sentenceWords = ChunkTextHelper.CountWords(sentence);
 
-            // Fill window up to chunkSize words
-            while (end < sentences.Length)
+            if (sentenceWords > chunkSize)
             {
-                var sentenceWords = sentences[end].Split(' ').Length;
-                if (wordCount + sentenceWords > chunkSize && window.Length > 0)
-                    break;
-
-                if (window.Length > 0) window.Append(' ');
-                window.Append(sentences[end]);
-                wordCount += sentenceWords;
-                end++;
+                FlushWindow();
+                chunks.AddRange(ChunkTextHelper.SplitByWordCount(sentence, chunkSize, chunkOverlap));
+                continue;
             }
 
-            chunks.Add(window.ToString().Trim());
+            if (wordCount + sentenceWords > chunkSize && window.Length > 0)
+                FlushWindow();
 
-            // Overlap: step back by chunkOverlap sentences
-            int step = Math.Max(1, end - start - chunkOverlap);
-            start += step;
+            if (window.Length > 0)
+                window.Append(' ');
+            window.Append(sentence);
+            wordCount += sentenceWords;
         }
 
-        return chunks;
+        FlushWindow();
+        return ChunkTextHelper.EnforceMaxWords(chunks, chunkSize, chunkOverlap);
+
+        void FlushWindow()
+        {
+            if (window.Length == 0)
+                return;
+
+            chunks.Add(window.ToString().Trim());
+            window.Clear();
+            wordCount = 0;
+        }
     }
 }

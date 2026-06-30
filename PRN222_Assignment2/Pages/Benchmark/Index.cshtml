@@ -5,17 +5,15 @@
     ViewData["ActivePage"] = "Benchmark";
 }
 
-<div class="page-header">
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
-        <div>
-            <h1>Benchmark RAG</h1>
-            <p>Đánh giá hiệu suất của các mô hình và chiến lược Chunking</p>
-        </div>
-        @if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
-        {
-            <a href="/Benchmark/Create" class="btn btn-primary">+ Tạo Experiment mới</a>
-        }
+<div class="page-header-row">
+    <div>
+        <h1 class="dashboard-title" style="margin-bottom:0.25rem;">BENCHMARK RAG</h1>
+        <p class="page-subtitle" style="margin-bottom:0;">Đánh giá hiệu suất của các mô hình và chiến lược Chunking</p>
     </div>
+    @if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
+    {
+        <a href="/Benchmark/Create" class="soft-btn btn-dark"><i class="bi bi-plus-lg"></i> Tạo Experiment mới</a>
+    }
 </div>
 
 <div class="card" style="margin-bottom:1rem;">

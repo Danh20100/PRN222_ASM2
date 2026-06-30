@@ -11,255 +11,20 @@
     return;
 }
 
-<style>
-    .subject-back-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: #6c757d;
-        text-decoration: none;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 0.75rem;
-    }
-    .subject-back-link:hover { color: #e83e8c; }
-
-    .subject-title {
-        font-size: 2rem;
-        font-weight: 900;
-        color: #e83e8c;
-        text-transform: uppercase;
-        margin: 0 0 0.25rem 0;
-        line-height: 1.1;
-    }
-
-    .subject-subtitle {
-        font-size: 0.9rem;
-        color: #6c757d;
-        margin: 0;
-    }
-
-    .btn-history {
-        background: #fff;
-        border: 2px solid #333;
-        color: #333;
-        font-weight: 800;
-        font-size: 0.8rem;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        text-transform: uppercase;
-        transition: all 0.15s;
-    }
-    .btn-history:hover { background: #f0f0f0; }
-
-    .btn-add-chapter {
-        background: #198754;
-        border: 2px solid #198754;
-        color: #fff;
-        font-weight: 800;
-        font-size: 0.8rem;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        text-transform: uppercase;
-        transition: all 0.15s;
-    }
-    .btn-add-chapter:hover { background: #157347; }
-
-    .btn-upload {
-        background: #ffc107;
-        border: 2px solid #ffc107;
-        color: #333;
-        font-weight: 800;
-        font-size: 0.8rem;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        text-transform: uppercase;
-        transition: all 0.15s;
-    }
-    .btn-upload:hover { background: #e0a800; }
-
-    .chapter-card {
-        background: #fff;
-        border: 2px solid #222;
-        border-radius: 6px;
-        overflow: hidden;
-        margin-bottom: 1.5rem;
-    }
-
-    .chapter-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem 1.25rem;
-    }
-
-    .chapter-title {
-        font-size: 1.15rem;
-        font-weight: 900;
-        color: #e83e8c;
-        margin: 0;
-    }
-
-    .chapter-actions {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .btn-edit-chapter {
-        background: #fff;
-        border: 2px solid #333;
-        color: #333;
-        font-weight: 800;
-        font-size: 0.78rem;
-        padding: 0.35rem 0.75rem;
-        border-radius: 4px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        text-transform: uppercase;
-    }
-    .btn-edit-chapter:hover { background: #f0f0f0; }
-
-    .btn-delete-chapter {
-        background: #dc3545;
-        border: 2px solid #dc3545;
-        color: #fff;
-        font-weight: 800;
-        font-size: 0.78rem;
-        padding: 0.35rem 0.75rem;
-        border-radius: 4px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        text-transform: uppercase;
-    }
-    .btn-delete-chapter:hover { background: #bb2d3b; }
-
-    .chapter-divider {
-        border: 0;
-        border-top: 2px dashed #dee2e6;
-        margin: 0 1.25rem;
-    }
-
-    .doc-list {
-        padding: 0.75rem 1.25rem 1.25rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-    }
-
-    .doc-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        padding: 0.65rem 0.85rem;
-        background: #f8f9fa;
-        gap: 1rem;
-    }
-
-    .doc-info { flex: 1; min-width: 0; }
-
-    .doc-name {
-        font-weight: 700;
-        color: #222;
-        font-size: 0.9rem;
-        margin-bottom: 0.2rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .doc-badge {
-        font-weight: 900;
-        font-size: 0.75rem;
-        color: #0d6efd;
-        background: #e7f0ff;
-        border: 1px solid #b8d0ff;
-        padding: 0.1rem 0.4rem;
-        border-radius: 3px;
-        flex-shrink: 0;
-    }
-
-    .doc-meta {
-        font-size: 0.78rem;
-        color: #6c757d;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .doc-actions {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        flex-shrink: 0;
-        font-size: 0.82rem;
-        font-weight: 700;
-    }
-
-    .doc-actions a, .doc-actions button {
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 0.82rem;
-        font-weight: 700;
-        padding: 0;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.2rem;
-        text-decoration: none;
-        transition: opacity 0.15s;
-    }
-    .doc-actions a:hover, .doc-actions button:hover { opacity: 0.75; }
-
-    .doc-action-view   { color: #0d6efd; }
-    .doc-action-dl     { color: #198754; }
-    .doc-action-chunk  { color: #6f42c1; }
-    .doc-action-delete { color: #dc3545; }
-
-    .empty-chapter {
-        font-size: 0.85rem;
-        color: #adb5bd;
-        text-align: center;
-        padding: 1rem;
-        font-style: italic;
-    }
-</style>
-
 <!-- Page Header -->
-<a href="/Subjects" class="subject-back-link">← Quay lại môn phụ trách</a>
+<a href="/Subjects" class="subject-back-link"><i class="bi bi-arrow-left"></i> Quay lại môn phụ trách</a>
 
-<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+<div class="subject-header-row">
     <div>
         <h1 class="subject-title">[@Model.Subject.SubjectCode] @Model.Subject.SubjectName</h1>
         <p class="subject-subtitle">Quản lý cấu trúc chương học và tài liệu</p>
     </div>
-    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-        <a href="#" class="btn-history">🕒 Lịch sử</a>
+    <div class="subject-actions-row">
+        <a href="#" class="btn-history"><i class="bi bi-clock-history"></i> Lịch sử</a>
         @if (Model.CanEdit)
         {
-            <button class="btn-add-chapter" onclick="showCreateModal()">+ Thêm chương</button>
-            <button class="btn-upload" onclick="showUploadModal()">⬆ Tải tài liệu</button>
+            <button class="btn-add-chapter" onclick="showCreateModal()"><i class="bi bi-plus-lg"></i> Thêm chương</button>
+            <button class="btn-upload" onclick="showUploadModal()"><i class="bi bi-upload"></i> Tải tài liệu</button>
         }
     </div>
 </div>
@@ -283,12 +48,12 @@
             @if (Model.CanEdit)
             {
                 <div class="chapter-actions">
-                    <button class="btn-edit-chapter">✏ Sửa</button>
+                    <button class="btn-edit-chapter"><i class="bi bi-pencil"></i> Sửa</button>
                     <form method="post" asp-page-handler="DeleteChapter" asp-route-id="@Model.Subject.SubjectId"
                           onsubmit="return confirm('Bạn có chắc chắn muốn xóa chương này?');" style="margin:0;">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="chapterId" value="@ch.ChapterId" />
-                        <button type="submit" class="btn-delete-chapter">🗑 Xóa</button>
+                        <button type="submit" class="btn-delete-chapter"><i class="bi bi-trash"></i> Xóa</button>
                     </form>
                 </div>
             }
@@ -307,25 +72,34 @@
                             @doc.OriginalFileName
                         </div>
                         <div class="doc-meta">
-                            <span>👤 Upload bởi: <strong>@doc.UploadedByFullName</strong></span>
-                            <span>🕒 @doc.UploadedAt.ToString("dd/MM/yyyy HH:mm (K)")</span>
+                            <span><i class="bi bi-person"></i> Upload bởi: <strong>@doc.UploadedByFullName</strong></span>
+                            <span><i class="bi bi-clock"></i> @doc.UploadedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                            <span class="doc-status doc-status--@doc.Status.ToLower()">@doc.Status@(doc.TotalChunks.HasValue && doc.Status == "Indexed" ? $" ({doc.TotalChunks} chunks)" : "")</span>
                         </div>
                     </div>
                     <div class="doc-actions">
-                        <a href="/Documents/View/@doc.DocumentId" class="doc-action-view">👁 Xem</a>
-                        <a href="/Documents/Download/@doc.DocumentId" class="doc-action-dl">⬇ Tải</a>
+                        @if (doc.Status == "Indexed")
+                        {
+                            <a href="/Documents/Details/@doc.DocumentId" class="doc-action-chunk"><i class="bi bi-diagram-3"></i> Chunks (@doc.TotalChunks)</a>
+                        }
+                        else if (doc.Status == "Failed" && !string.IsNullOrEmpty(doc.ErrorMessage))
+                        {
+                            <span class="doc-error-hint" title="@doc.ErrorMessage"><i class="bi bi-exclamation-triangle"></i> Lỗi embed</span>
+                        }
+                        <a href="/Documents/View/@doc.DocumentId" class="doc-action-view"><i class="bi bi-eye"></i> Xem</a>
+                        <a href="/Documents/Download/@doc.DocumentId" class="doc-action-dl"><i class="bi bi-download"></i> Tải</a>
                         @if (Model.CanEdit)
                         {
                             <form method="post" asp-page-handler="Chunk" asp-route-id="@Model.Subject.SubjectId" style="margin:0;">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="documentId" value="@doc.DocumentId" />
-                                <button type="submit" class="doc-action-chunk">⟳ Chuyển</button>
+                                <button type="submit" class="doc-action-chunk"><i class="bi bi-arrow-repeat"></i> Chunk & Embed</button>
                             </form>
                             <form method="post" asp-page-handler="DeleteDoc" asp-route-id="@Model.Subject.SubjectId"
                                   onsubmit="return confirm('Xóa tài liệu này?');" style="margin:0;">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="documentId" value="@doc.DocumentId" />
-                                <button type="submit" class="doc-action-delete">🗑 Xóa</button>
+                                <button type="submit" class="doc-action-delete"><i class="bi bi-trash"></i> Xóa</button>
                             </form>
                         }
                     </div>
@@ -341,12 +115,12 @@
 
 @if (!Model.Chapters.Any())
 {
-    <div style="text-align:center; padding:3rem; color:#adb5bd; border:2px dashed #dee2e6; border-radius:8px;">
-        <div style="font-size:2.5rem; margin-bottom:0.75rem;">📂</div>
-        <div style="font-weight:700;">Chưa có chương học nào.</div>
+    <div class="empty-state-box">
+        <div style="font-size:2.5rem; margin-bottom:0.75rem;"><i class="bi bi-folder2"></i></div>
+        <div style="font-weight:900; text-transform:uppercase;">Chưa có chương học nào.</div>
         @if (Model.CanEdit)
         {
-            <button class="btn-add-chapter" style="margin-top:1rem;" onclick="showCreateModal()">+ Thêm chương đầu tiên</button>
+            <button class="btn-add-chapter" style="margin-top:1rem;" onclick="showCreateModal()"><i class="bi bi-plus-lg"></i> Thêm chương đầu tiên</button>
         }
     </div>
 }
@@ -354,9 +128,9 @@
 @if (Model.CanEdit)
 {
     <!-- Create Chapter Modal -->
-    <div id="create-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-        <div style="background:#fff; border:2px solid #222; border-radius:6px; padding:1.5rem; width:100%; max-width:480px; margin:1rem;">
-            <h3 style="margin:0 0 1.25rem; font-weight:900; text-transform:uppercase; color:#333;">Thêm chương học mới</h3>
+    <div id="create-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title"><i class="bi bi-plus-lg"></i> Thêm chương học mới</h3>
             <form method="post" asp-page-handler="CreateChapter" asp-route-id="@Model.Subject.SubjectId">
                 @Html.AntiForgeryToken()
                 <div class="form-group" style="margin-bottom:0.75rem;">
@@ -380,9 +154,9 @@
     </div>
 
     <!-- Upload Document Modal -->
-    <div id="upload-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-        <div style="background:#fff; border:2px solid #222; border-radius:6px; padding:1.5rem; width:100%; max-width:480px; margin:1rem;">
-            <h3 style="margin:0 0 1.25rem; font-weight:900; text-transform:uppercase; color:#e83e8c;">⬆ Tải tài liệu lên</h3>
+    <div id="upload-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title"><i class="bi bi-upload"></i> Tải tài liệu lên</h3>
             <form method="post" enctype="multipart/form-data" asp-page-handler="UploadDocument" asp-route-id="@Model.Subject.SubjectId">
                 @Html.AntiForgeryToken()
                 <div class="form-group" style="margin-bottom:0.75rem;">
@@ -396,15 +170,23 @@
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom:0.75rem;">
-                    <label class="form-label" style="font-weight:700;">File (.pdf, .docx, .pptx, .txt)</label>
-                    <input type="file" name="uploadFile" class="form-control" accept=".pdf,.txt,.docx,.pptx" required />
+                    <label class="form-label" style="font-weight:700;">File (.pdf, .docx, .txt)</label>
+                    <input type="file" name="uploadFile" class="form-control" accept=".pdf,.txt,.docx" required />
+                    <small class="form-hint">Sau khi upload, hệ thống tự động chunk & embed (có thể mất vài giây).</small>
                 </div>
                 <div class="form-group" style="margin-bottom:0.75rem;">
                     <label class="form-label" style="font-weight:700;">Embedding Model</label>
                     <select name="embeddingModelId" class="form-control" required>
                         @foreach (var m in Model.EmbeddingModels.Where(x => x.IsActive))
                         {
-                            <option value="@m.EmbeddingModelId" selected="@m.IsDefault">@m.ModelName (@m.Provider)</option>
+                            if (m.IsDefault)
+                            {
+                                <option value="@m.EmbeddingModelId" selected>@m.ModelName (@m.Provider)</option>
+                            }
+                            else
+                            {
+                                <option value="@m.EmbeddingModelId">@m.ModelName (@m.Provider)</option>
+                            }
                         }
                     </select>
                 </div>
@@ -413,13 +195,20 @@
                     <select name="chunkingStrategyId" class="form-control" required>
                         @foreach (var s in Model.ChunkingStrategies)
                         {
-                            <option value="@s.ChunkingStrategyId" selected="@s.IsDefault">@s.StrategyName (@s.StrategyType)</option>
+                            if (s.IsDefault)
+                            {
+                                <option value="@s.ChunkingStrategyId" selected>@s.StrategyName — @s.ChunkSize từ/chunk, overlap @s.ChunkOverlap</option>
+                            }
+                            else
+                            {
+                                <option value="@s.ChunkingStrategyId">@s.StrategyName — @s.ChunkSize từ/chunk, overlap @s.ChunkOverlap</option>
+                            }
                         }
                     </select>
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
                     <button type="button" class="btn btn-secondary" onclick="hideUploadModal()">Huỷ</button>
-                    <button type="submit" class="btn-upload">Upload</button>
+                    <button type="submit" class="btn-upload"><i class="bi bi-lightning"></i> Upload & Chunk</button>
                 </div>
             </form>
         </div>
@@ -427,12 +216,12 @@
 
     @section Scripts {
         <script>
-            function showCreateModal() { document.getElementById('create-modal').style.display = 'flex'; }
-            function hideCreateModal() { document.getElementById('create-modal').style.display = 'none'; }
+            function showCreateModal() { document.getElementById('create-modal').classList.add('show'); }
+            function hideCreateModal() { document.getElementById('create-modal').classList.remove('show'); }
             document.getElementById('create-modal').addEventListener('click', function(e) { if (e.target === this) hideCreateModal(); });
 
-            function showUploadModal() { document.getElementById('upload-modal').style.display = 'flex'; }
-            function hideUploadModal() { document.getElementById('upload-modal').style.display = 'none'; }
+            function showUploadModal() { document.getElementById('upload-modal').classList.add('show'); }
+            function hideUploadModal() { document.getElementById('upload-modal').classList.remove('show'); }
             document.getElementById('upload-modal').addEventListener('click', function(e) { if (e.target === this) hideUploadModal(); });
         </script>
     }

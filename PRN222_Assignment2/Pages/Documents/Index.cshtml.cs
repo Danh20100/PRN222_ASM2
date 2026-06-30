@@ -132,8 +132,13 @@ public class IndexModel : PageModel
 
         try
         {
-            await _documentService.UploadAndIndexAsync(dto, userId);
-            TempData["Success"] = $"Đã upload '{uploadFile.FileName}'. Đang tiến hành index trong nền...";
+            var result = await _documentService.UploadAndIndexAsync(dto, userId);
+            TempData["Success"] = result.Status switch
+            {
+                "Indexed" => $"Đã upload '{uploadFile.FileName}' và chunk & embed thành công ({result.TotalChunks} chunks).",
+                "Failed" => $"Upload xong nhưng chunk & embed thất bại: {result.ErrorMessage}",
+                _ => $"Đã upload '{uploadFile.FileName}'."
+            };
         }
         catch (Exception ex)
         {

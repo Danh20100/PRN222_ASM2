@@ -1,0 +1,15 @@
+{
+  "DetailedErrors": true,
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "ApiKeys": {
+    "Gemini": "YOUR_GEMINI_API_KEY_HERE",
+    "HuggingFace": "",
+    "OpenAI": "",
+    "OllamaBaseUrl": "http://localhost:11434"
+  }
+}

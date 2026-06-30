@@ -1,13 +1,17 @@
 @page "{id:int}"
 @model PRN222_Assignment2.Pages.Documents.DetailsModel
 @{
-    ViewData["Title"] = "Chi tiết Tài liệu";
+    ViewData["Title"] = "Chi tiết chunks";
 }
 
-<div class="page-header">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h1>Chi tiết Document: @(Model.Document?.OriginalFileName ?? "N/A")</h1>
-        <a href="/Documents" class="btn btn-secondary">← Quay lại</a>
+<div class="page-header-row">
+    <div>
+        <h1 class="dashboard-title">@(Model.Document?.OriginalFileName ?? "Tài liệu")</h1>
+        <p class="page-subtitle">Chunk & Embed — @Model.Document?.SubjectName / @Model.Document?.ChapterName</p>
+    </div>
+    <div style="display:flex; gap:0.5rem;">
+        <a href="/Documents/View/@Model.Document?.DocumentId" class="soft-btn btn-light"><i class="bi bi-eye"></i> Xem file</a>
+        <a href="javascript:history.back()" class="soft-btn btn-light"><i class="bi bi-arrow-left"></i> Quay lại</a>
     </div>
 </div>
 
@@ -30,7 +34,7 @@ else
                         @Model.Document.Status
                     </span>
                 </p>
-                <p><strong>Tổng số chunks:</strong> @Model.Document.TotalChunks</p>
+                <p><strong>Tổng số chunks:</strong> @Model.Document.TotalChunks <span style="color:var(--text-muted); font-size:0.85rem;">(tối đa @Model.ChunkSize từ/chunk)</span></p>
                 <p><strong>Upload lúc:</strong> @Model.Document.UploadedAt.ToString("dd/MM/yyyy HH:mm")</p>
             </div>
         </div>
@@ -48,7 +52,7 @@ else
             <thead>
                 <tr>
                     <th style="width: 5%">#</th>
-                    <th style="width: 10%">Số chữ</th>
+                    <th style="width: 10%">Số từ</th>
                     <th>Nội dung Chunk</th>
                 </tr>
             </thead>

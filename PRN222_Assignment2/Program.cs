@@ -99,7 +99,10 @@ builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeFolder("/");
     options.Conventions.AuthorizeFolder("/Admin", "AdminOnly");
-    options.Conventions.AuthorizeFolder("/Documents", "TeacherOrAdmin");
+    options.Conventions.AuthorizePage("/Documents/View");
+    options.Conventions.AuthorizePage("/Documents/Download");
+    options.Conventions.AuthorizePage("/Documents/Index", "TeacherOrAdmin");
+    options.Conventions.AuthorizePage("/Documents/Details");
     options.Conventions.AuthorizeFolder("/Benchmark", "TeacherOrAdmin");
     options.Conventions.AllowAnonymousToPage("/Auth/Login");
     options.Conventions.AllowAnonymousToPage("/Auth/Register");
@@ -149,6 +152,23 @@ using (var scope = app.Services.CreateScope())
         db.Database.Migrate();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         logger.LogInformation("Database migration applied successfully.");
+
+        // Upgrade deprecated Gemini embedding model names in existing databases
+        var deprecatedModels = db.EmbeddingModels
+            .Where(m => m.ModelName == "text-embedding-004" || m.ModelName == "embedding-001")
+            .ToList();
+        if (deprecatedModels.Count > 0)
+        {
+            foreach (var model in deprecatedModels)
+            {
+                model.ModelName = "gemini-embedding-001";
+                model.Description = "Google Gemini gemini-embedding-001 (768 dims)";
+                if (model.VectorDimension <= 0)
+                    model.VectorDimension = 768;
+            }
+            db.SaveChanges();
+            logger.LogInformation("Updated {Count} deprecated embedding model(s) to gemini-embedding-001.", deprecatedModels.Count);
+        }
     }
     catch (Exception ex)
     {

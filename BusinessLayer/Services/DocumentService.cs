@@ -22,6 +22,7 @@ public interface IDocumentService
     Task<DocumentDto> UploadAndIndexAsync(UploadDocumentDto dto, int uploadedByUserId, CancellationToken cancellationToken = default);
     Task<bool> ReIndexAsync(int documentId, int embeddingModelId, int chunkingStrategyId, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(int documentId);
+    Task<string?> GetPreviewTextAsync(int documentId);
 }
 
 public class DocumentService : IDocumentService
@@ -163,23 +164,61 @@ public class DocumentService : IDocumentService
         await _uow.SaveChangesAsync();
         await NotifyDocumentUpdateSafeAsync("create", document.DocumentId, document.Status, cancellationToken);
 
-        // 3. Index asynchronously (background, fire-and-forget)
-        _ = Task.Run(() => IndexDocumentAsync(document.DocumentId, dto.EmbeddingModelId,
-                                              dto.ChunkingStrategyId, cancellationToken));
+        var (embeddingModelId, chunkingStrategyId) = await ResolveIndexingConfigAsync(
+            dto.EmbeddingModelId, dto.ChunkingStrategyId);
+
+        await IndexDocumentAsync(
+            document.DocumentId,
+            embeddingModelId,
+            chunkingStrategyId,
+            CancellationToken.None);
 
         return await GetByIdAsync(document.DocumentId) ?? throw new Exception("Document not found after creation");
+    }
+
+    private async Task<(int EmbeddingModelId, int ChunkingStrategyId)> ResolveIndexingConfigAsync(
+        int embeddingModelId, int chunkingStrategyId)
+    {
+        if (embeddingModelId <= 0)
+        {
+            embeddingModelId = await _uow.EmbeddingModels.Query()
+                .Where(m => m.IsDefault && m.IsActive)
+                .Select(m => m.EmbeddingModelId)
+                .FirstOrDefaultAsync();
+            if (embeddingModelId <= 0)
+                embeddingModelId = 1;
+        }
+
+        if (chunkingStrategyId <= 0)
+        {
+            chunkingStrategyId = await _uow.ChunkingStrategies.Query()
+                .Where(s => s.IsDefault && s.IsActive)
+                .Select(s => s.ChunkingStrategyId)
+                .FirstOrDefaultAsync();
+            if (chunkingStrategyId <= 0)
+                chunkingStrategyId = 1;
+        }
+
+        return (embeddingModelId, chunkingStrategyId);
     }
 
     public async Task<bool> ReIndexAsync(
         int documentId, int embeddingModelId, int chunkingStrategyId,
         CancellationToken cancellationToken = default)
     {
-        // Delete existing chunks for this document
         var existingChunks = await _uow.DocumentChunks.FindAsync(c => c.DocumentId == documentId);
         _uow.DocumentChunks.RemoveRange(existingChunks);
+
+        var existingIndexes = await _uow.DocumentIndexes.FindAsync(i => i.DocumentId == documentId);
+        _uow.DocumentIndexes.RemoveRange(existingIndexes);
+
         await _uow.SaveChangesAsync();
 
-        await IndexDocumentAsync(documentId, embeddingModelId, chunkingStrategyId, cancellationToken);
+        await IndexDocumentAsync(
+            documentId,
+            embeddingModelId,
+            chunkingStrategyId,
+            cancellationToken == default ? CancellationToken.None : cancellationToken);
         return true;
     }
 
@@ -228,6 +267,7 @@ public class DocumentService : IDocumentService
                 ?? throw new Exception($"No chunking strategy for type '{chunkingConfig.StrategyType}'");
 
             var chunks = strategy.Chunk(text, chunkingConfig.ChunkSize, chunkingConfig.ChunkOverlap);
+            chunks = ChunkTextHelper.EnforceMaxWords(chunks, chunkingConfig.ChunkSize, chunkingConfig.ChunkOverlap);
 
             if (chunks.Count == 0)
                 throw new Exception("Chunking produced zero chunks");
@@ -249,7 +289,7 @@ public class DocumentService : IDocumentService
                     EmbeddingModelId = embeddingModelId,
                     ChunkIndex = i,
                     ChunkText = chunkText,
-                    TokenCount = CountWords(chunkText),
+                    TokenCount = ChunkTextHelper.CountWords(chunkText),
                     EmbeddingJson = VectorHelper.SerializeEmbedding(embeddings[i]),
                     VectorDimension = embeddings[i].Length
                 })
@@ -324,9 +364,17 @@ public class DocumentService : IDocumentService
         using var pdf = PdfDocument.Open(filePath);
         foreach (var page in pdf.GetPages())
         {
-            if (!string.IsNullOrWhiteSpace(page.Text))
+            var pageText = page.Text;
+            if (string.IsNullOrWhiteSpace(pageText))
             {
-                builder.AppendLine(page.Text);
+                pageText = string.Join(' ', page.GetWords().Select(w => w.Text));
+            }
+
+            if (!string.IsNullOrWhiteSpace(pageText))
+            {
+                builder.AppendLine($"--- Trang {page.Number} ---");
+                builder.AppendLine(pageText);
+                builder.AppendLine();
             }
         }
 
@@ -380,6 +428,38 @@ public class DocumentService : IDocumentService
         return true;
     }
 
+    public async Task<string?> GetPreviewTextAsync(int documentId)
+    {
+        var document = await _uow.Documents.GetByIdAsync(documentId);
+        if (document?.StoragePath == null || !File.Exists(document.StoragePath))
+            return null;
+
+        if (!string.IsNullOrWhiteSpace(document.FileName))
+        {
+            var extractedTextPath = GetExtractedTextPath(document.FileName);
+            if (File.Exists(extractedTextPath))
+                return await File.ReadAllTextAsync(extractedTextPath, Encoding.UTF8);
+        }
+
+        var chunks = await _uow.DocumentChunks.Query()
+            .Where(c => c.DocumentId == documentId)
+            .OrderBy(c => c.ChunkIndex)
+            .Select(c => c.ChunkText)
+            .ToListAsync();
+
+        if (chunks.Count > 0)
+            return string.Join(Environment.NewLine + Environment.NewLine, chunks);
+
+        try
+        {
+            return await ExtractTextAsync(document.StoragePath, document.FileType ?? string.Empty);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private static string GetExtractedTextPath(string documentFileName)
     {
         var baseName = Path.GetFileNameWithoutExtension(documentFileName);
@@ -393,16 +473,6 @@ public class DocumentService : IDocumentService
             return "unnamed-file";
 
         return Path.GetFileName(originalFileName).Trim();
-    }
-
-    private static int CountWords(string text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            return 0;
-
-        return text
-            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
-            .Length;
     }
 
     private async Task NotifyDocumentUpdateSafeAsync(

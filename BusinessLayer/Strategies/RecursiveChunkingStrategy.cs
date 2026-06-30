@@ -1,9 +1,10 @@
+using System.Text;
+using BusinessLayer.Helpers;
+
 namespace BusinessLayer.Strategies;
 
 /// <summary>
-/// Recursive chunker — tries to split hierarchically: 
-/// paragraph → sentence → word, until chunks are ≤ chunkSize.
-/// Mimics LangChain's RecursiveCharacterTextSplitter.
+/// Recursive chunker — splits hierarchically by paragraph, line, sentence, then word count.
 /// </summary>
 public class RecursiveChunkingStrategy : IChunkingStrategy
 {
@@ -13,103 +14,89 @@ public class RecursiveChunkingStrategy : IChunkingStrategy
 
     public List<string> Chunk(string text, int chunkSize, int chunkOverlap)
     {
-        if (string.IsNullOrWhiteSpace(text)) return [];
-        return RecursiveSplit(text.Trim(), chunkSize, chunkOverlap, 0);
+        if (string.IsNullOrWhiteSpace(text))
+            return [];
+
+        var chunks = RecursiveSplit(text.Trim(), chunkSize, chunkOverlap, 0);
+        return ChunkTextHelper.EnforceMaxWords(chunks, chunkSize, chunkOverlap);
     }
 
     private static List<string> RecursiveSplit(string text, int chunkSize, int chunkOverlap, int separatorIndex)
     {
-        var wordCount = text.Split(' ').Length;
+        var wordCount = ChunkTextHelper.CountWords(text);
 
-        // Base case: fits in one chunk
         if (wordCount <= chunkSize)
             return [text];
 
-        // Try current separator
         if (separatorIndex >= Separators.Length)
-        {
-            // Last resort: hard split by word count
-            return HardSplit(text, chunkSize, chunkOverlap);
-        }
+            return ChunkTextHelper.SplitByWordCount(text, chunkSize, chunkOverlap);
 
         var separator = Separators[separatorIndex];
         var parts = text.Split(separator, StringSplitOptions.RemoveEmptyEntries)
-                        .Select(p => p.Trim())
-                        .Where(p => !string.IsNullOrWhiteSpace(p))
-                        .ToList();
+            .Select(p => p.Trim())
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .ToList();
 
         if (parts.Count <= 1)
-        {
-            // Separator didn't help, try next level
             return RecursiveSplit(text, chunkSize, chunkOverlap, separatorIndex + 1);
-        }
 
         var result = new List<string>();
         var current = new System.Text.StringBuilder();
-        int currentWords = 0;
+        var currentWords = 0;
 
         foreach (var part in parts)
         {
-            var partWords = part.Split(' ').Length;
+            var partWords = ChunkTextHelper.CountWords(part);
 
             if (partWords > chunkSize)
             {
-                // Flush current buffer
-                if (current.Length > 0)
-                {
-                    result.Add(current.ToString().Trim());
-                    current.Clear();
-                    currentWords = 0;
-                }
-                // Recursively split this large part
+                FlushCurrent();
                 result.AddRange(RecursiveSplit(part, chunkSize, chunkOverlap, separatorIndex + 1));
                 continue;
             }
 
             if (currentWords + partWords > chunkSize && current.Length > 0)
             {
-                result.Add(current.ToString().Trim());
+                FlushCurrent();
 
-                // Apply overlap
-                if (chunkOverlap > 0 && current.Length > 0)
+                if (chunkOverlap > 0 && result.Count > 0)
                 {
-                    var overlapWords = current.ToString()
-                        .Split(' ')
-                        .TakeLast(chunkOverlap)
-                        .ToArray();
-                    current.Clear();
-                    current.Append(string.Join(' ', overlapWords));
-                    currentWords = overlapWords.Length;
-                }
-                else
-                {
-                    current.Clear();
-                    currentWords = 0;
+                    var overlapText = TakeLastWords(result[^1], chunkOverlap);
+                    if (!string.IsNullOrWhiteSpace(overlapText))
+                    {
+                        current.Append(overlapText);
+                        currentWords = ChunkTextHelper.CountWords(overlapText);
+                    }
                 }
             }
 
-            if (current.Length > 0) current.Append(separator);
+            if (current.Length > 0)
+                current.Append(separator);
             current.Append(part);
             currentWords += partWords;
         }
 
-        if (current.Length > 0)
-            result.Add(current.ToString().Trim());
-
+        FlushCurrent();
         return result;
+
+        void FlushCurrent()
+        {
+            if (current.Length == 0)
+                return;
+
+            result.Add(current.ToString().Trim());
+            current.Clear();
+            currentWords = 0;
+        }
     }
 
-    private static List<string> HardSplit(string text, int chunkSize, int chunkOverlap)
+    private static string TakeLastWords(string text, int wordCount)
     {
-        var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var chunks = new List<string>();
-        int start = 0;
-        while (start < words.Length)
-        {
-            int end = Math.Min(start + chunkSize, words.Length);
-            chunks.Add(string.Join(' ', words[start..end]));
-            start += chunkSize - chunkOverlap;
-        }
-        return chunks;
+        var words = ChunkTextHelper.SplitWords(text);
+        if (words.Length == 0)
+            return string.Empty;
+
+        var take = Math.Min(wordCount, words.Length);
+        return ChunkTextHelper.JoinWords(words[^take..]);
     }
 }

@@ -1,0 +1,130 @@
+@page "{id:int}"
+@model PRN222_Assignment2.Pages.Documents.ViewModel
+@{
+    ViewData["Title"] = "Xem tài liệu";
+    Layout = "_Layout";
+    var fileType = (Model.Document?.FileType ?? "").Trim().TrimStart('.').ToLowerInvariant();
+    var isPdf = fileType == "pdf";
+}
+
+<div class="page-header-row">
+    <div>
+        <h1 class="dashboard-title">@(Model.Document?.OriginalFileName ?? "Tài liệu")</h1>
+        <p class="page-subtitle">
+            @Model.Document?.SubjectName — @Model.Document?.ChapterName
+        </p>
+    </div>
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <a href="/Documents/Download/@Model.Document?.DocumentId" class="soft-btn btn-primary">
+            <i class="bi bi-download"></i> Tải xuống
+        </a>
+        <a href="/Documents/Details/@Model.Document?.DocumentId" class="soft-btn btn-light">
+            <i class="bi bi-diagram-3"></i> Chi tiết chunks
+        </a>
+        <a href="javascript:history.back()" class="soft-btn btn-light">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom:1rem;">
+    <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <span class="doc-status doc-status--@(Model.Document?.Status.ToLower() ?? "pending")">
+            @(Model.Document?.Status ?? "Unknown")
+        </span>
+        @if (Model.Document?.Status == "Indexed")
+        {
+            <span style="font-size:0.9rem; color:var(--text-muted);">
+                <i class="bi bi-check-circle-fill" style="color:var(--icon-green);"></i>
+                Đã chunk & embed: <strong>@Model.Document.TotalChunks chunks</strong>
+                @if (Model.Document.IndexedAt.HasValue)
+                {
+                    <span>— @Model.Document.IndexedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                }
+            </span>
+        }
+        else if (Model.Document?.Status == "Failed")
+        {
+            <span class="alert alert-error" style="margin:0; padding:0.35rem 0.75rem;">
+                @Model.Document.ErrorMessage
+            </span>
+        }
+        else if (Model.Document?.Status == "Pending" || Model.Document?.Status == "Processing")
+        {
+            <span style="font-size:0.9rem; color:var(--text-muted);">
+                <i class="bi bi-hourglass-split"></i> Đang xử lý chunk & embed...
+            </span>
+        }
+    </div>
+</div>
+
+@if (isPdf || fileType is "txt" or "md")
+{
+    <div class="doc-view-layout">
+        <div class="card doc-view-file">
+            <h3 class="card-title"><i class="bi bi-file-earmark"></i> Nội dung file</h3>
+            @if (isPdf)
+            {
+                <iframe src="/Documents/View/@Model.Document?.DocumentId?mode=file"
+                        class="doc-view-iframe" title="PDF viewer"></iframe>
+            }
+            else
+            {
+                <iframe src="/Documents/View/@Model.Document?.DocumentId?mode=file"
+                        class="doc-view-iframe doc-view-iframe--text" title="Text viewer"></iframe>
+            }
+        </div>
+        <div class="card doc-view-chunks">
+            <h3 class="card-title"><i class="bi bi-diagram-3"></i> Chunks đã tạo (@Model.Chunks.Count)</h3>
+            @if (Model.Chunks.Any())
+            {
+                <div class="chunk-list">
+                    @foreach (var chunk in Model.Chunks)
+                    {
+                        <div class="chunk-item">
+                            <div class="chunk-item-header">
+                                <strong>Chunk #@chunk.ChunkIndex</strong>
+                                <span>@chunk.TokenCount từ</span>
+                            </div>
+                            <div class="chunk-item-body">@chunk.ChunkText</div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state" style="padding:1.5rem;">
+                    Chưa có chunk nào. Bấm <strong>Chunk & Embed</strong> ở trang môn học để xử lý lại.
+                </div>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="card">
+        <h3 class="card-title"><i class="bi bi-file-text"></i> Nội dung trích xuất</h3>
+        <div class="doc-preview" style="white-space: pre-wrap; word-break: break-word; line-height: 1.7; font-size: 0.95rem; max-height: 50vh; overflow-y: auto;">
+            @Model.PreviewText
+        </div>
+    </div>
+
+    @if (Model.Chunks.Any())
+    {
+        <div class="card" style="margin-top:1rem;">
+            <h3 class="card-title"><i class="bi bi-diagram-3"></i> Chunks đã tạo (@Model.Chunks.Count)</h3>
+            <div class="chunk-list">
+                @foreach (var chunk in Model.Chunks)
+                {
+                    <div class="chunk-item">
+                        <div class="chunk-item-header">
+                            <strong>Chunk #@chunk.ChunkIndex</strong>
+                            <span>@chunk.TokenCount từ</span>
+                        </div>
+                        <div class="chunk-item-body">@chunk.ChunkText</div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}

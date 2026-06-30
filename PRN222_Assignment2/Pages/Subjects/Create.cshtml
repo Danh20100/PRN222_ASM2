@@ -5,18 +5,8 @@
     ViewData["ActivePage"] = "Subjects";
 }
 
-<div class="page-header">
-    <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-        <div>
-            <h1 style="display:flex; align-items:center; gap:0.5rem;">
-                <a href="/Subjects" style="color:#6c757d; text-decoration:none;">Môn học</a> 
-                <span style="color:#6c757d;">/</span>
-                Thêm mới
-            </h1>
-            <p>Tạo môn học mới trên hệ thống</p>
-        </div>
-    </div>
-</div>
+<h1 class="dashboard-title">THÊM MÔN HỌC</h1>
+<p class="page-subtitle"><a href="/Subjects" class="subject-back-link" style="margin-bottom:0;">← Quay lại danh sách</a></p>
 
 @if (TempData["Error"] != null)
 {
