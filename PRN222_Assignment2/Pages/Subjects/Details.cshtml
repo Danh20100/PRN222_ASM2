@@ -270,12 +270,19 @@
             function hideUploadModal() { document.getElementById('upload-modal').classList.remove('show'); }
             document.getElementById('upload-modal').addEventListener('click', function(e) { if (e.target === this) hideUploadModal(); });
 
-<<<<<<< HEAD
+            function showEditModal(chapterId, chapterName, orderIndex) {
+                document.getElementById('edit-chapter-id').value = chapterId;
+                document.getElementById('edit-chapter-name').value = chapterName;
+                document.getElementById('edit-chapter-order').value = orderIndex;
+                document.getElementById('edit-modal').classList.add('show');
+            }
+            function hideEditModal() { document.getElementById('edit-modal').classList.remove('show'); }
+            document.getElementById('edit-modal').addEventListener('click', function(e) { if (e.target === this) hideEditModal(); });
+
             const progressPanel = document.getElementById('upload-progress-panel');
             const progressBar = document.getElementById('upload-progress-bar');
             const progressMessage = document.getElementById('upload-progress-message');
             const progressFile = document.getElementById('upload-progress-file');
-            let activeDocumentId = null;
 
             function showProgressPanel(fileName) {
                 progressPanel.hidden = false;
@@ -305,7 +312,6 @@
                 });
 
                 if (data.documentId) {
-                    activeDocumentId = data.documentId;
                     const inline = document.getElementById('doc-progress-' + data.documentId);
                     if (inline) {
                         inline.hidden = false;
@@ -357,46 +363,49 @@
                 return response.json();
             }
 
-            document.getElementById('upload-form').addEventListener('submit', async function (e) {
-                e.preventDefault();
-                const fileInput = this.querySelector('input[type="file"]');
-                const fileName = fileInput.files[0]?.name || 'Tài liệu';
-                hideUploadModal();
-                showProgressPanel(fileName);
-                updateProgressUi({ percent: 8, message: 'Đang gửi file lên server...', step: 'upload' });
+            const uploadForm = document.getElementById('upload-form');
+            if (uploadForm) {
+                uploadForm.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const fileInput = this.querySelector('input[type="file"]');
+                    const fileName = fileInput.files[0]?.name || 'Tài liệu';
+                    hideUploadModal();
+                    showProgressPanel(fileName);
+                    updateProgressUi({ percent: 8, message: 'Đang gửi file lên server...', step: 'upload' });
 
-                const submitBtn = this.querySelector('button[type="submit"]');
-                submitBtn.disabled = true;
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    submitBtn.disabled = true;
 
-                try {
-                    const result = await postFormAjax(this);
-                    if (result.success) {
-                        updateProgressUi({
-                            documentId: result.documentId,
-                            percent: 100,
-                            message: result.message,
-                            step: 'done'
-                        });
-                        hideProgressPanel(1500);
-                        scheduleReload();
-                    } else {
-                        updateProgressUi({
-                            documentId: result.documentId,
-                            percent: 100,
-                            message: result.message || 'Thất bại',
-                            step: 'failed'
-                        });
+                    try {
+                        const result = await postFormAjax(this);
+                        if (result.success) {
+                            updateProgressUi({
+                                documentId: result.documentId,
+                                percent: 100,
+                                message: result.message,
+                                step: 'done'
+                            });
+                            hideProgressPanel(1500);
+                            scheduleReload();
+                        } else {
+                            updateProgressUi({
+                                documentId: result.documentId,
+                                percent: 100,
+                                message: result.message || 'Thất bại',
+                                step: 'failed'
+                            });
+                            progressMessage.style.color = '#dc2626';
+                            hideProgressPanel(3000);
+                            scheduleReload();
+                        }
+                    } catch (err) {
+                        updateProgressUi({ percent: 100, message: 'Lỗi upload: ' + err.message, step: 'failed' });
                         progressMessage.style.color = '#dc2626';
-                        hideProgressPanel(3000);
-                        scheduleReload();
+                    } finally {
+                        submitBtn.disabled = false;
                     }
-                } catch (err) {
-                    updateProgressUi({ percent: 100, message: 'Lỗi upload: ' + err.message, step: 'failed' });
-                    progressMessage.style.color = '#dc2626';
-                } finally {
-                    submitBtn.disabled = false;
-                }
-            });
+                });
+            }
 
             document.querySelectorAll('.doc-chunk-form').forEach(form => {
                 form.addEventListener('submit', async function (e) {
@@ -415,7 +424,7 @@
                         const result = await postFormAjax(this);
                         updateProgressUi({
                             documentId: result.documentId || parseInt(docId),
-                            percent: result.success ? 100 : 100,
+                            percent: 100,
                             message: result.message,
                             step: result.success ? 'done' : 'failed'
                         });
@@ -434,16 +443,6 @@
                 const inline = document.getElementById('doc-progress-' + docId);
                 if (inline) inline.hidden = false;
             });
-=======
-            function showEditModal(chapterId, chapterName, orderIndex) {
-                document.getElementById('edit-chapter-id').value = chapterId;
-                document.getElementById('edit-chapter-name').value = chapterName;
-                document.getElementById('edit-chapter-order').value = orderIndex;
-                document.getElementById('edit-modal').classList.add('show');
-            }
-            function hideEditModal() { document.getElementById('edit-modal').classList.remove('show'); }
-            document.getElementById('edit-modal').addEventListener('click', function(e) { if (e.target === this) hideEditModal(); });
->>>>>>> 825d41f316d76f9045a11f77d5d6fc6149ae4056
         </script>
     }
 }
